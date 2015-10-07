@@ -673,3 +673,49 @@ Qed.
 
 End Ejercicio10.
 
+Section Ejercicio11.
+
+Lemma  L7 : forall (A B : Set) (l m : list A) (f : A -> B),
+  map A B f (append A l m) = append B (map A B f l) (map A B f m).
+Proof.
+  intros.
+  induction l;
+  [ |
+    simpl;
+    rewrite IHl
+  ]; trivial.
+Qed.
+
+Lemma L8 : forall (A : Set) (l m : list A) (P : A -> bool),
+  filter A P (append A l m) = append A (filter A P l) (filter A P m).
+Proof.
+  intros.
+  induction l;
+  [ |
+    simpl;
+    rewrite IHl;
+    case (P x)
+  ]; trivial.
+Qed.
+
+Lemma L9 : forall (A : Set) (l m n : list A),
+  append A l (append A m n) = append A (append A l m) n.
+Proof.
+  intros.
+  induction l;
+  [ |
+    simpl;
+    rewrite IHl
+  ]; trivial.
+Qed.
+
+Lemma L10 : forall (A : Set) (l : list A),
+reverse A (reverse A l) = l.
+Proof.
+  intros.
+  induction l;
+  [ | simpl; rewrite L6; rewrite IHl ]; trivial.
+Qed.
+
+End Ejercicio11.
+
