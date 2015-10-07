@@ -651,18 +651,25 @@ Proof.
   ].
 Qed.
 
-Lemma AppendAsoc : 1 = 1.
+(* Lema auxiliar, asociatividad del append *)
+Lemma AppendAsoc : forall (A : Set) (l m n : list A),
+  append A (append A l m) n = append A l (append A m n).
+Proof.
+  intros.
+  induction l;
+  [ | simpl; rewrite IHl ]; trivial.
+Qed.
 
 Lemma L6 : forall (A : Set) (l m : list A),
  reverse A (append A l m) = append A (reverse A m) (reverse A l).
 Proof.
   intros.
-  induction l; simpl.
-    rewrite L1.
-    trivial.
-
-    rewrite IHl.
-    
+  induction l; simpl;
+  [ rewrite L1
+  | rewrite IHl;
+    rewrite AppendAsoc
+  ]; trivial.
 Qed.
 
 End Ejercicio10.
+
