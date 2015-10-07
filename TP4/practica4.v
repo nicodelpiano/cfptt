@@ -719,3 +719,26 @@ Qed.
 
 End Ejercicio11.
 
+Section Ejercicio12.
+
+Fixpoint filterMap (A B : Set) (P : B -> bool) (f : A -> B)
+  (l : list A) {struct l} : list B :=
+    match l with
+    | nil => nil B
+    | cons a l1 =>
+      match P (f a) with
+      | true => cons B (f a) (filterMap A B P f l1)
+      | false => filterMap A B P f l1
+      end
+    end.
+
+Lemma FusionFilterMap :
+  forall (A B : Set) (P : B -> bool) (f : A -> B) (l : list A), 
+    filter B P (map A B f l) = filterMap A B P f l.
+Proof.
+  intros.
+  induction l;
+  [ | simpl; case (P (f x)); rewrite IHl ]; trivial.
+Qed.
+
+End Ejercicio12.
