@@ -783,6 +783,57 @@ Qed.
 
 End Ejercicio18.
 
+Section Ejercicio19.
+
+(* 19.1 *)
+Variable A: Set.
+
+Inductive ACom: nat -> Set :=
+  | leafACom: A -> ACom 0
+  | consACom: forall n: nat, A -> ACom n -> ACom n -> ACom (S n).
+
+Variable a: A.
+
+Check (leafACom a).
+
+(* 19.2 *)
+Fixpoint h (n: nat) (t: ACom n): nat :=
+    match t with
+      leafACom _ => 1
+      | consACom n0 x t1 t2 => h n0 t1 + h n0 t2
+    end.
+
+Eval simpl in (h 0 (leafACom a)).
+
+(* 19.3 *)
+
+Parameter poten: nat -> nat -> nat.
+
+Axiom potO : forall n : nat, poten (S n) 0 = 1.  
+(*  n0 = 1 ∀ n>0  *) 
+Axiom potS : forall m: nat, poten 2 (S m) = sum (poten 2 m) (poten 2 m). 
+(*  2m+1 = 2m + 2m  *)
+
+Lemma e193: forall (n: nat) (t: ACom n),
+  h n t = poten 2 n.
+Proof.
+  intros.
+  induction t;
+  [ rewrite potO
+    |
+    simpl;
+    rewrite (potS n)
+  ]; auto.
+Qed.
+
+End Ejercicio19.
+
+Section Ejercicio20.
+
+
+
+End Ejercicio20.
+
 Section Ejercicio16.
 
 Check nil.
