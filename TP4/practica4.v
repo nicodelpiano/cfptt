@@ -881,23 +881,15 @@ End Ejercicio20.
 
 Section Ejercicio16.
 
-Check nil.
+Inductive posfijo (A: Set): list A -> list A -> Prop :=
+  posfijoE : forall l: list A, posfijo A l l
+  | posfijoL : forall (l1 l2: list A) (x: A),
+    posfijo A l1 l2 -> posfijo A l1 (cons A x l2).
 
-(*Inductive posfijo (A : Set) : list A -> list A -> Prop :=
-  posfijoE : forall n : list A, posfijo A (nil A) n
-  | posfijoL : forall n m: list A,
-    (exists l : list A, m = append A l n) -> posfijo A n m.
-*)
-
-Inductive posfijo (A : Set) : list A -> list A -> Prop :=
-  posfijoE : forall n : list A, posfijo A (nil A) n
-  | posfijoL : forall n m: list A, forall x y: A,
-    posfijo A n m -> posfijo A (cons A x n) (cons A y m).
-
-(* 16.2 *)
-Lemma aux16 (A : Set) : forall l : list A,
-  posfijo A l l.
+Lemma posfijoNil (A: Set):
+  forall l: list A, posfijo A (nil A) l.
 Proof.
+  intro.
   induction l.
     apply posfijoE.
 
@@ -905,30 +897,38 @@ Proof.
     trivial.
 Qed.
 
+Lemma notNil (A: Set):
+  forall (l1 l2: list A) (x: A), nil A <> append A l2 (cons A x l1).
+Proof.
+  intros.
+  induction l2.
+    discriminate.
+
+    simpl.
+    discriminate.
+Qed.
+(**
+Lemma posfijoCons (A: Set):
+  forall (l1 l2: list A) (x: A),
+    **)
+
+(* 16.2 *)
 Lemma e162a (A : Set) : forall l1 l2 l3 : list A,
   l2 = append A l3 l1 -> posfijo A l1 l2.
 Proof.
-  induction l1.
-    intros.
+  intros.
+  rewrite H.
+  clear H.
+  induction l3.
+    simpl.
     apply posfijoE.
 
-    intros.
-    rewrite H.
-    destruct l3.
-      simpl.
-      apply posfijoL.
-      apply aux16.
-
-      simpl.
-      apply posfijoL.
-      simpl in H.
-      apply (IHl1 (append A l3 (cons A x l1)) (append A l3 (cons A x (nil A)))).
-      rewrite <- (L9 A l3 (cons A x (nil A)) l1).
-      simpl.
-      trivial.
+    simpl.
+    apply posfijoL.
+    trivial.
 Qed.
 
-Lemma aux162 (A : Set) : forall (l : list A) (x : A),
+Lemma aux162 (A: Set) : forall (l : list A) (x : A),
   append A (cons A x (nil A)) l = (cons A x l).
 Proof.
   intros.
@@ -936,8 +936,37 @@ Proof.
   trivial.
 Qed.
 
-Lemma e162b (A : Set) : forall l1 l2 : list A,
-  posfijo A l1 l2 -> (exists l3 : list A, l2 = append A l3 l1).
+(* 16.3 *)
+Fixpoint ultimo (A: Set) (xs: list A) {struct xs}: list A :=
+  match xs with
+    nil => nil A
+    | cons y nil => xs
+    | cons y ys => ultimo A ys
+  end.
+
+Eval simpl in (ultimo nat (cons nat 1 (cons nat 2 (cons nat 3 (nil nat))))).
+
+(* 16.4 *)
+Lemma e164 (A: Set):
+  forall l: list A, posfijo A (ultimo A l) l.
+Proof.
+  intro.
+  induction l.
+    simpl.
+    apply posfijoE.
+
+    simpl.
+    elim IHl.
+      intro.
+    destruct l.
+      apply posfijoL.
+      apply posfijoE.
+
+      apply posfijoL.
+Qed.
+
+Lemma e162b (A: Set): forall l1 l2: list A,
+  posfijo A l1 l2 -> (exists l3: list A, l2 = append A l3 l1).
 Proof.
   intros.
   induction H.
@@ -947,7 +976,6 @@ Proof.
 
     elim IHposfijo.
     intros xs H1.
-    
     
 Qed.
 
