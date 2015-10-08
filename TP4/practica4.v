@@ -830,7 +830,9 @@ End Ejercicio19.
 
 Section Ejercicio20.
 
-Require Import Coq.Arith.Max.
+Definition max: nat -> nat -> nat :=
+  fun n m =>
+    if leBool m n then n else m.
 
 (* 20.1 *)
 Inductive AB (A: Set): nat -> Set :=
@@ -843,10 +845,9 @@ Fixpoint camino (A: Set) (n: nat) (t: AB A n): list A :=
   match t with
     emptyAB => nil A
     | branchAB n1 n2 x t1 t2 =>
-      let c1 := camino A n1 t1
-      in let c2 := camino A n2 t2
-         in if leBool (length A c2) (length A c1) then cons A x c1
-            else cons A x c2
+      if leBool n2 n1
+      then cons A x (camino A n1 t1)
+      else cons A x (camino A n2 t2)
   end.
 
 (* Prueba de ejemplo *)
@@ -859,10 +860,22 @@ Definition t5 := branchAB nat 1 2 5 t1 t4.
 Definition t6 := branchAB nat 3 3 6 t3 t5.
 
 Eval simpl in (camino nat 0 e).
+Eval simpl in (camino nat 3 t5).
 Eval simpl in (camino nat 4 t6).
 
 (* 20.3 *)
-Lemma .
+Lemma e203 (A: Set): forall (n: nat) (t: AB A n),
+  length A (camino A n t) = n.
+Proof.
+  intros.
+  induction t; simpl;
+  [ |
+    unfold max;
+    case (leBool k n);
+    simpl;
+      [ rewrite IHt1 | rewrite IHt2 ]
+   ]; trivial.
+Qed.
 
 End Ejercicio20.
 
