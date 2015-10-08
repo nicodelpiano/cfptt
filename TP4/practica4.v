@@ -742,3 +742,117 @@ Proof.
 Qed.
 
 End Ejercicio12.
+
+Section Ejercicio18.
+ 
+Variable A : Set. 
+Inductive Tree_ : Set := 
+  | nullT : Tree_ 
+  | consT : A -> Tree_ -> Tree_ -> Tree_.
+
+(* 18.1 *)
+Inductive isSubTree: Tree_ -> Tree_ -> Prop :=
+  | isSubTree0 : forall t: Tree_, isSubTree t t
+  | isSubTree1 : forall (t1 t2 t3: Tree_) (x: A),
+    isSubTree t1 t2 -> isSubTree t1 (consT x t2 t3)
+  | isSubTree2 : forall (t1 t2 t3: Tree_) (x: A),
+    isSubTree t1 t3 -> isSubTree t1 (consT x t2 t3).
+
+(* 18.2 *)
+Lemma isSubTreeReflex : forall t: Tree_,
+  isSubTree t t.
+Proof.
+  apply isSubTree0.
+Qed.
+
+(* 18.3 *)
+Lemma isSubTreeTrans : forall t1 t2 t3: Tree_,
+  isSubTree t1 t2 /\ isSubTree t2 t3 -> isSubTree t1 t3.
+Proof.
+  intros.
+  destruct H.
+  induction H0;
+  [ |
+    apply isSubTree1;
+    apply IHisSubTree
+    |
+    apply isSubTree2;
+    apply IHisSubTree
+  ]; trivial.
+Qed.
+
+End Ejercicio18.
+
+Section Ejercicio16.
+
+Check nil.
+
+(*Inductive posfijo (A : Set) : list A -> list A -> Prop :=
+  posfijoE : forall n : list A, posfijo A (nil A) n
+  | posfijoL : forall n m: list A,
+    (exists l : list A, m = append A l n) -> posfijo A n m.
+*)
+
+Inductive posfijo (A : Set) : list A -> list A -> Prop :=
+  posfijoE : forall n : list A, posfijo A (nil A) n
+  | posfijoL : forall n m: list A, forall x y: A,
+    posfijo A n m -> posfijo A (cons A x n) (cons A y m).
+
+(* 16.2 *)
+Lemma aux16 (A : Set) : forall l : list A,
+  posfijo A l l.
+Proof.
+  induction l.
+    apply posfijoE.
+
+    apply posfijoL.
+    trivial.
+Qed.
+
+Lemma e162a (A : Set) : forall l1 l2 l3 : list A,
+  l2 = append A l3 l1 -> posfijo A l1 l2.
+Proof.
+  induction l1.
+    intros.
+    apply posfijoE.
+
+    intros.
+    rewrite H.
+    destruct l3.
+      simpl.
+      apply posfijoL.
+      apply aux16.
+
+      simpl.
+      apply posfijoL.
+      simpl in H.
+      apply (IHl1 (append A l3 (cons A x l1)) (append A l3 (cons A x (nil A)))).
+      rewrite <- (L9 A l3 (cons A x (nil A)) l1).
+      simpl.
+      trivial.
+Qed.
+
+Lemma aux162 (A : Set) : forall (l : list A) (x : A),
+  append A (cons A x (nil A)) l = (cons A x l).
+Proof.
+  intros.
+  simpl.
+  trivial.
+Qed.
+
+Lemma e162b (A : Set) : forall l1 l2 : list A,
+  posfijo A l1 l2 -> (exists l3 : list A, l2 = append A l3 l1).
+Proof.
+  intros.
+  induction H.
+    exists n.
+    symmetry.
+    apply (L1 A n).
+
+    elim IHposfijo.
+    intros xs H1.
+    
+    
+Qed.
+
+End Ejercicio16.
