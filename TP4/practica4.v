@@ -956,13 +956,11 @@ Proof.
     apply posfijoE.
 
     simpl.
-    elim IHl.
-      intro.
     destruct l.
-      apply posfijoL.
       apply posfijoE.
 
       apply posfijoL.
+      trivial.
 Qed.
 
 Lemma e162b (A: Set): forall l1 l2: list A,
@@ -970,13 +968,16 @@ Lemma e162b (A: Set): forall l1 l2: list A,
 Proof.
   intros.
   induction H.
-    exists n.
-    symmetry.
-    apply (L1 A n).
+    exists (nil A).
+    simpl.
+    trivial.
 
     elim IHposfijo.
-    intros xs H1.
-    
+    intros.
+    exists (cons A x x0).
+    rewrite H0.
+    simpl.
+    trivial.
 Qed.
 
 End Ejercicio16.
