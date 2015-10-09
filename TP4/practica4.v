@@ -607,10 +607,7 @@ Lemma L1 : forall (A : Set) (l : list A), append A l (nil
 Proof.
   intros.
   induction l;
-  [ |
-    simpl;
-    rewrite IHl
-  ]; trivial.
+  [ | simpl; rewrite IHl ]; trivial.
 Qed.
 
 Lemma L2 : forall (A : Set) (l : list A) (a : A), ~(cons 
@@ -666,7 +663,8 @@ Proof.
   intros.
   induction l; simpl;
   [ rewrite L1
-  | rewrite IHl;
+    |
+    rewrite IHl;
     rewrite AppendAsoc
   ]; trivial.
 Qed.
@@ -680,10 +678,7 @@ Lemma  L7 : forall (A B : Set) (l m : list A) (f : A -> B),
 Proof.
   intros.
   induction l;
-  [ |
-    simpl;
-    rewrite IHl
-  ]; trivial.
+  [ | simpl; rewrite IHl ]; trivial.
 Qed.
 
 Lemma L8 : forall (A : Set) (l m : list A) (P : A -> bool),
@@ -886,32 +881,6 @@ Inductive posfijo (A: Set): list A -> list A -> Prop :=
   | posfijoL : forall (l1 l2: list A) (x: A),
     posfijo A l1 l2 -> posfijo A l1 (cons A x l2).
 
-Lemma posfijoNil (A: Set):
-  forall l: list A, posfijo A (nil A) l.
-Proof.
-  intro.
-  induction l.
-    apply posfijoE.
-
-    apply posfijoL.
-    trivial.
-Qed.
-
-Lemma notNil (A: Set):
-  forall (l1 l2: list A) (x: A), nil A <> append A l2 (cons A x l1).
-Proof.
-  intros.
-  induction l2.
-    discriminate.
-
-    simpl.
-    discriminate.
-Qed.
-(**
-Lemma posfijoCons (A: Set):
-  forall (l1 l2: list A) (x: A),
-    **)
-
 (* 16.2 *)
 Lemma e162a (A : Set) : forall l1 l2 l3 : list A,
   l2 = append A l3 l1 -> posfijo A l1 l2.
@@ -919,21 +888,13 @@ Proof.
   intros.
   rewrite H.
   clear H.
-  induction l3.
-    simpl.
-    apply posfijoE.
-
-    simpl.
-    apply posfijoL.
-    trivial.
-Qed.
-
-Lemma aux162 (A: Set) : forall (l : list A) (x : A),
-  append A (cons A x (nil A)) l = (cons A x l).
-Proof.
-  intros.
-  simpl.
-  trivial.
+  induction l3;
+  simpl;
+  [ apply posfijoE
+    |
+    apply posfijoL;
+    trivial
+  ].
 Qed.
 
 (* 16.3 *)
@@ -951,33 +912,91 @@ Lemma e164 (A: Set):
   forall l: list A, posfijo A (ultimo A l) l.
 Proof.
   intro.
-  induction l.
-    simpl.
-    apply posfijoE.
-
-    simpl.
-    destruct l.
-      apply posfijoE.
-
-      apply posfijoL.
-      trivial.
+  induction l;
+  simpl;
+  [ apply posfijoE
+    |
+    destruct l;
+      [ apply posfijoE
+        |
+        apply posfijoL
+      ];
+      trivial
+   ].
 Qed.
 
 Lemma e162b (A: Set): forall l1 l2: list A,
   posfijo A l1 l2 -> (exists l3: list A, l2 = append A l3 l1).
 Proof.
   intros.
-  induction H.
-    exists (nil A).
-    simpl.
-    trivial.
-
-    elim IHposfijo.
-    intros.
-    exists (cons A x x0).
-    rewrite H0.
-    simpl.
-    trivial.
+  induction H;
+  [ exists (nil A)
+    |
+    elim IHposfijo;
+    intros;
+    exists (cons A x x0);
+    rewrite H0
+   ]; simpl; trivial.
 Qed.
 
 End Ejercicio16.
+
+Section Ejercicio15.
+
+Inductive Tree (A: Set): Set :=
+  leafTree: A -> Tree A
+  | branchTree: Tree A -> Tree A -> Tree A.
+
+(* 15.1 *)
+Fixpoint mapTree (A B: Set) (t: Tree A) (f: A -> B): Tree B :=
+  match t with
+    leafTree x => leafTree B (f x)
+    | branchTree t1 t2 =>
+      branchTree B (mapTree A B t1 f) (mapTree A B t2 f)
+  end.
+
+(* 15.2 *)
+Fixpoint numLeaves (A: Set) (t: Tree A): nat :=
+  match t with
+    leafTree x => 1
+    | branchTree t1 t2 =>
+      (numLeaves A t1) + (numLeaves A t2)
+  end.
+
+(* 15.3 *)
+Lemma e153 (A B: Set):
+  forall (t: Tree A) (f: A -> B),
+    numLeaves B (mapTree A B t f) = numLeaves A t.
+Proof.
+  intros.
+  induction t;
+  simpl;
+  [ |
+    rewrite IHt1;
+    rewrite IHt2
+  ]; trivial.
+Qed.
+
+(* 15.4 *)
+Fixpoint hojas (A: Set) (t: Tree A): list A :=
+  match t with
+    leafTree x => cons A x (nil A)
+    | branchTree t1 t2 =>
+      append A (hojas A t1) (hojas A t2)
+  end.
+
+Lemma e154 (A: Set):
+  forall (t: Tree A), length A (hojas A t) = numLeaves A t.
+Proof.
+  intro.
+  induction t;
+  simpl;
+  [ trivial
+    |
+    rewrite L4;
+    rewrite IHt1;
+    rewrite IHt2
+  ]; trivial.
+Qed.
+
+End Ejercicio15.
