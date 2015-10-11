@@ -10,7 +10,7 @@ Definition consnat: nat -> list nat -> list nat:= cons nat.
 Check(list nat).
 Check(consnat 0 nilnat).
 
-Inductive arbol (X:Set) :=
+Inductive arbol (X:Set): Set :=
   empty : arbol X
   | branch : X -> arbol X -> arbol X -> arbol X.
 
