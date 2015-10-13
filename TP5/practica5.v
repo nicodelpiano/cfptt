@@ -114,49 +114,31 @@ Lemma DeleteAllNotMember : forall (l : List) (x : A),
 Proof.
   unfold not.
   intros.
-  inversion H.
-    induction l.
-      inversion H.
-
-      simpl in H, H1.
+  induction l.
     inversion H.
 
-    apply IHl.
-    simpl in H.
-    destruct (equal x a).
-      trivial.
-
-      inversion H.
-      
-  inversion H.
-    destruct l.
-
-
-  induction l.
-    intros.
-    inversion_clear H.
-
-    intros.
-    apply (IHl x).
-    simpl in H, IHl.
-    destruct (equal x a).
-      trivial.
-
-      induction l.
-      simpl in H.
-      simpl.
-
-  unfold not.
-  intros.
-  induction l.
-    simpl in H.
     inversion H.
+    simpl in H.
+    remember (equal x a) as y.
+    destruct y.
+      exact (IHl H).
+
+      injection H1.
+      intros.
+      symmetry in Heqy.
+      rewrite H2 in Heqy.
+      apply equal2 in Heqy.
+      trivial.
 
     simpl in H.
-    destruct (equal x a).
-      apply (IHl H).
+    remember (equal x a) as y.
+    destruct y.
+      exact (IHl H).
 
-      
+      injection H0.
+      intros.
+      rewrite <- H2 in IHl.
+      exact (IHl H1).
 Qed.
 
 End Ejercicio3.
