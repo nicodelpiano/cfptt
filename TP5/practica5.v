@@ -141,4 +141,53 @@ Proof.
       exact (IHl H1).
 Qed.
 
+(* 3.4 *)
+Fixpoint delete (x : A) (xs : List) : List :=
+  match xs with
+    nullL => nullL
+    | consL y ys =>
+      if equal x y then ys
+      else consL y (delete x ys)
+  end.
+
+Lemma setCons : forall (l : List) (x : A),
+  isSet (consL x l) -> isSet l.
+Proof.
+  intros.
+  induction l.
+    apply isSetNil.
+
+    inversion H.
+    destruct H1.
+    trivial.
+Qed.
+
+(* 3.5 *)
+Lemma DeleteNotMember : forall (l : List) (x : A), 
+isSet l -> ~ MemL x (delete x l).
+Proof.
+  unfold not.
+  intros.
+  induction l.
+    inversion H0.
+
+    simpl in H0.
+    remember (equal x a) as y.
+    destruct y.
+    symmetry in Heqy.
+    apply equal1 in Heqy.
+    inversion H.
+    destruct H2.
+    rewrite <- Heqy in H2.
+    contradiction.
+
+    inversion H0.
+    symmetry in Heqy.
+    rewrite H2 in Heqy.
+    apply equal2 in Heqy.
+    trivial.
+    apply setCons in H.
+    apply IHl; trivial.
+Qed.
+
 End Ejercicio3.
