@@ -99,7 +99,7 @@ Inductive isSet : List -> Prop :=
     ~MemL x l /\ isSet l -> isSet (consL x l).
 
 (* 3.2 *)
-Fixpoint deleteAll (x : A) (xs : List): List :=
+Fixpoint deleteAll (x : A) (xs : List) : List :=
   match xs with
     | nullL => xs
     | consL y ys =>
@@ -191,3 +191,75 @@ Proof.
 Qed.
 
 End Ejercicio3.
+
+Section Ejercicio4.
+
+Variable A : Set.
+
+Inductive AB : Set :=
+   nullAB : AB
+   | consAB : A -> AB -> AB -> AB.
+
+(* 4.a *)
+Inductive Pertenece : A -> AB -> Prop :=
+  pertNullAB : forall (x : A) (t1 t2 : AB),
+    Pertenece x (consAB x t1 t2)
+  | pertConsABLeft : forall (x y: A) (t1 t2 : AB),
+    Pertenece x t1 -> Pertenece x (consAB y t1 t2)
+  | pertConsABRight : forall (x y: A) (t1 t2 : AB),
+    Pertenece x t2 -> Pertenece x (consAB y t1 t2).
+
+(* 4.b *)
+Parameter eqGen: A -> A -> bool.
+
+Fixpoint Borrar (ab : AB) (x : A) : AB :=
+  match ab with
+    nullAB => nullAB
+    | consAB y lt rt =>
+      if eqGen x y then nullAB
+      else consAB y (Borrar lt x) (Borrar rt x)
+  end.
+
+(* 4.c *)
+Axiom eqGen1 : forall x : A, ~ (eqGen x x) = false. 
+(*(negb (eqGen x x)) = false.*)
+
+Lemma e4cAux : forall (t1 t2 : AB) (a b : A),
+  ~ (Pertenece a t1) /\
+  ~ (Pertenece a t2) /\
+  eqGen a b = false ->
+  Pertenece a (consAB b t1 t2) -> False.
+Proof.
+  unfold not.
+  intros.
+  destruct H as [H1 [H2 H3]].
+  inversion H0.
+    rewrite H5 in H3.
+    apply eqGen1 in H3.
+    trivial.
+
+    exact (H1 H5).
+
+    exact (H2 H5).
+Qed.
+
+Lemma BorrarNoPertenece: forall (x : AB) (a : A),
+  ~(Pertenece a (Borrar x a)).
+Proof.
+  unfold not.
+  intros.
+  induction x.
+    inversion H.
+
+    simpl in H.
+    remember (eqGen a a0) as y.
+    destruct y.
+      inversion H.
+
+      symmetry in Heqy.
+      apply (e4cAux (Borrar x1 a) (Borrar x2 a) a a0);
+        [ unfold not; split; [ | split]
+        | ]; trivial.
+Qed. 
+
+End Ejercicio4.
