@@ -262,4 +262,91 @@ Proof.
         | ]; trivial.
 Qed. 
 
+(* 4.d *)
+Inductive SinRepetidos : AB -> Prop :=
+  nullABNoRep : SinRepetidos nullAB
+  | consABNoRep : forall (a : A) (t1 t2 : AB),
+    SinRepetidos t1 /\
+    SinRepetidos t2 /\
+    (forall (x : A),
+      Pertenece x t1 -> ~ Pertenece x t2) /\
+    (forall (x : A),
+      Pertenece x t2 -> ~ Pertenece x t1) /\
+    ~ Pertenece a t1 /\
+    ~ Pertenece a t2 ->
+    SinRepetidos (consAB a t1 t2).
+
 End Ejercicio4.
+
+Section Ejercicio5.
+
+(* 5.1 *)
+Definition Var : Set := nat.
+
+Inductive BoolExpr : Set :=
+  BoolVar : Var -> BoolExpr
+  | Bool : bool -> BoolExpr
+  | Or : BoolExpr -> BoolExpr -> BoolExpr
+  | Not : BoolExpr -> BoolExpr.
+
+(* 5.2 *)
+Definition Valor : Set := bool.
+
+Definition Memoria : Set := Var -> Valor.
+
+Definition lookup : Memoria -> Var -> Valor :=
+  fun f v => f v.
+
+Inductive BEval : BoolExpr -> Memoria -> bool -> Prop :=
+  | evar : forall (v : Var) (m : Memoria),
+      BEval (BoolVar v) m (lookup m v)
+  | eboolt : forall (m : Memoria),
+      BEval (Bool true) m true
+  | eboolf : forall (m : Memoria),
+      BEval (Bool false) m false
+  | eorl : forall (e1 e2 : BoolExpr) (m : Memoria),
+      BEval e1 m true -> BEval (Or e1 e2) m true
+  | eorr : forall (e1 e2 : BoolExpr) (m : Memoria),
+      BEval e2 m true -> BEval (Or e1 e2) m true
+  | eorrl : forall (e1 e2 : BoolExpr) (m : Memoria),
+      BEval e1 m false /\ BEval e2 m false ->
+        BEval (Or e1 e2) m false
+  | enott : forall (e : BoolExpr) (m : Memoria),
+      BEval e m true -> BEval (Not e) m false
+  | enotf : forall (e : BoolExpr) (m : Memoria),
+      BEval e m false -> BEval (Not e) m true
+  .
+
+(* 5.3 *)
+Lemma e53a: forall (m : Memoria),
+  ~ (BEval (Bool true) m false).
+Proof.
+  unfold not.
+  intros.
+  inversion H.
+Qed.
+
+Lemma e53b:
+  forall (m : Memoria) (e1 e2 : BoolExpr) (w : bool),
+    BEval e1 m false /\
+    BEval e2 m w ->
+    BEval (Or e1 e2) m w.
+Proof.
+  intros.
+  destruct w.
+    apply eorr.
+    apply H.
+
+    apply eorrl.
+    trivial.
+Qed.
+
+Lemma e53c:
+  forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
+    BEval e m w1 /\ BEval e m w2 -> w1 = w2.
+Proof.
+  intros.
+  
+Qed.
+
+End Ejercicio5.
