@@ -603,6 +603,7 @@ Section Ejercicio7.
 (* 6.2 *)
 Infix ";" := Seq (at level 60, right associativity).
 
+(* 7.1 *)
 Inductive Execute : Instr -> Memoria -> Memoria -> Prop :=
   | xAss : forall (m : Memoria) (e : BoolExpr)
     (w : Valor) (v : Var),
@@ -627,16 +628,79 @@ Inductive Execute : Instr -> Memoria -> Memoria -> Prop :=
     (p : Instr),
     BEval c m false
     -> Execute (While c p) m m
-  | xBeginEnd m : forall (p : LInstr) (m1 : Memoria),
+  | xBeginEnd : forall (p : LInstr) (m m1 : Memoria),
     ExecuteLInstr p m m1 -> Execute (Begin p) m m1
     with
-      ExecuteLInstr : LInstr -> Memoria -> Memoria -> Prop :=
-        | xEmptyBlock m : ExecuteLInstr Fin m m
-        | xNext m :
-          forall (i : Instr) (li : LInstr) (m1 m2 : Memoria),
-          Execute i m m1 /\ ExecuteLInstr li m1 m2
-          -> ExecuteLInstr (i; li) m m2
+    ExecuteLInstr : LInstr -> Memoria -> Memoria -> Prop :=
+      | xEmptyBlock : forall (m : Memoria), ExecuteLInstr Fin m m
+      | xNext : forall (i : Instr) (li : LInstr) (m m1 m2 : Memoria),
+        Execute i m m1 /\ ExecuteLInstr li m1 m2
+        -> ExecuteLInstr (i; li) m m2
   .
 
+(* 7.2 *)
+Lemma e72 : forall (e1 e2 : Instr) (m m1 : Memoria),
+  Execute (IfThenElse (Not (Bool true)) e1 e2) m m1
+  -> Execute (IfThenElse (Bool true) e2 e1) m m1.
+Proof.
+   intros.
+   inversion_clear H;
+   inversion_clear H0;
+   inversion_clear H;
+   [ apply xIfElse | apply xIfThen ];
+   split; trivial; apply eboolt.
+Qed.
+
+(* 7.3 *)
+Lemma e73 : forall (e1 e2 : Instr) (m m1 : Memoria) (c : BoolExpr),
+  Execute (IfThenElse (Not c) e1 e2) m m1
+  -> Execute (IfThenElse c e2 e1) m m1.
+Proof.
+  intros.
+  inversion_clear H;
+  inversion_clear H0;
+  inversion_clear H;
+  [ apply xIfElse | apply xIfThen ];
+  split; trivial; apply eboolt.
+Qed.
+
+(* 7.4 *)
+Lemma e74 : forall (p : Instr) (m m1 : Memoria),
+  Execute (While (Bool false) p) m m1 -> m = m1.
+Proof.
+  intros.
+  inversion_clear H.
+  inversion_clear H0.
+  inversion_clear H.
+  reflexivity.
+Qed.
+
+(* 7.5 *)
+Lemma e75 : forall (c : BoolExpr) (p : Instr) (m m1 : Memoria),
+  Execute (Begin (IfThenElse c p Skip; While c p; Fin)) m m1
+  -> Execute (While c p) m m1.
+Proof.
+  intros.
+  inversion_clear H.
+  inversion_clear H0.
+  inversion_clear H.
+  inversion_clear H0.
+  inversion_clear H.
+  inversion_clear H1.
+  inversion_clear H.
+Qed.
+
+(* 7.5 *)
+Lemma e75 : forall (c : BoolExpr) (p : Instr) (m m1 : Memoria),
+  ExecuteLInstr (IfThenElse c p Skip; While c p; Fin) m m1
+  -> Execute (While c p) m m1.
+Proof.
+  intros.
+  inversion_clear H.
+  inversion_clear H0.
+  inversion_clear H.
+  inversion_clear H0.
+  inversion_clear H1.
+Qed.
 
 End Ejercicio7.
