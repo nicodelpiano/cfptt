@@ -595,6 +595,19 @@ Proof.
   reflexivity.
 Qed.
 
+(* 7.6 *)
+Lemma e76 : forall (m m1 : Memoria) (v1 v2 : Var),
+  v1 <> v2 -> Execute (PP v1 v2) m m1 ->
+  lookup m1 v2 = false /\ lookup m1 v1 = true.
+Proof.
+  intros.
+  split.
+  inversion_clear H0.
+  inversion_clear H1.
+  inversion H2.
+Qed.
+  
+
 (* 7.5 *)
 Lemma e75 : forall (c : BoolExpr) (p : Instr) (m m1 : Memoria),
   Execute (Begin (IfThenElse c p Skip; While c p; Fin)) m m1
