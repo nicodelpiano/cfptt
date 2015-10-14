@@ -535,17 +535,17 @@ Inductive Execute : Instr -> Memoria -> Memoria -> Prop :=
     Execute Skip m m
   | xIfThen : forall (m m1 : Memoria) (c : BoolExpr)
     (p1 p2 : Instr),
-    BEval c m true /\ Execute p1 m m1 ->
+    BEval c m true -> Execute p1 m m1 ->
       Execute (IfThenElse c p1 p2) m m1
   | xIfElse : forall (m m2 : Memoria) (c : BoolExpr)
     (p1 p2 : Instr),
-    BEval c m false /\ Execute p2 m m2 ->
+    BEval c m false -> Execute p2 m m2 ->
       Execute (IfThenElse c p1 p2) m m2
   | xWhileTrue : forall (m m1 m2 : Memoria) (c : BoolExpr)
     (p : Instr),
     BEval c m true
-    /\ Execute p m m1
-    /\ Execute (While c p) m1 m2
+    -> Execute p m m1
+    -> Execute (While c p) m1 m2
     -> Execute (While c p) m m2
   | xWhileFalse : forall (m : Memoria) (c : BoolExpr)
     (p : Instr),
@@ -557,7 +557,7 @@ Inductive Execute : Instr -> Memoria -> Memoria -> Prop :=
     ExecuteLInstr : LInstr -> Memoria -> Memoria -> Prop :=
       | xEmptyBlock : forall (m : Memoria), ExecuteLInstr Fin m m
       | xNext : forall (i : Instr) (li : LInstr) (m m1 m2 : Memoria),
-        Execute i m m1 /\ ExecuteLInstr li m1 m2
+        Execute i m m1 -> ExecuteLInstr li m1 m2
         -> ExecuteLInstr (i; li) m m2
   .
 
@@ -569,9 +569,9 @@ Proof.
    intros.
    inversion_clear H;
    inversion_clear H0;
-   inversion_clear H;
-   [ apply xIfElse | apply xIfThen ];
-   split; trivial; apply eboolt.
+   inversion_clear H.
+   apply xIfThen; trivial.
+   apply eboolt.
 Qed.
 
 (* 7.3 *)
@@ -582,9 +582,7 @@ Proof.
   intros.
   inversion_clear H;
   inversion_clear H0;
-  inversion_clear H;
-  [ apply xIfElse | apply xIfThen ];
-  split; trivial; apply eboolt.
+  [ apply xIfElse | apply xIfThen ]; trivial.
 Qed.
 
 (* 7.4 *)
@@ -592,9 +590,8 @@ Lemma e74 : forall (p : Instr) (m m1 : Memoria),
   Execute (While (Bool false) p) m m1 -> m = m1.
 Proof.
   intros.
-  inversion_clear H.
+  inversion_clear H;
   inversion_clear H0.
-  inversion_clear H.
   reflexivity.
 Qed.
 
@@ -607,8 +604,17 @@ Proof.
   inversion_clear H.
   inversion_clear H0.
   inversion_clear H.
+    apply (xWhileTrue m m2 m1 c).
+    trivial.
+
+    trivial.
+
+    
+
+  apply (xWhileTrue m1 m m1 c).
+
   inversion_clear H0.
-  inversion_clear H.
+  inversion_clear H.  
   inversion_clear H1.
   inversion_clear H.
 Qed.
@@ -619,9 +625,10 @@ Lemma e75 : forall (c : BoolExpr) (p : Instr) (m m1 : Memoria),
   -> Execute (While c p) m m1.
 Proof.
   intros.
-  inversion_clear H.
-  inversion_clear H0.
-  inversion_clear H.
+  inversion H.
+  inversion H1.
+  inversion H.
+  apply (xWhileTrue m m2 m1 c).
   inversion_clear H0.
   inversion_clear H1.
 Qed.
