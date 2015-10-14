@@ -278,12 +278,6 @@ Inductive SinRepetidos : AB -> Prop :=
 
 End Ejercicio4.
 
-Section Ejercicio6.
-
-
-
-End Ejercicio6.
-
 Section Ejercicio5.
 
 (* 5.1 *)
@@ -431,6 +425,7 @@ Proof.
 Qed.
 *)
 
+(*
 Lemma determinismo :
   forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
     BEval e m w1 /\ BEval e m w2 ->
@@ -462,6 +457,12 @@ Proof.
     rewrite H4.
     rewrite H2.
     trivial.
+
+  destruct w1.
+    destruct w2.
+      trivial.
+
+      
 
   destruct w1;
   destruct w2; trivial;
@@ -535,5 +536,65 @@ Proof.
   apply (eorl e1 e2) in H.
   apply enott in H.
 Qed.
-
+*)
 End Ejercicio5.
+
+Section Ejercicio6.
+
+(* 6.1 *)
+
+Inductive Instr : Set :=
+  | Skip : Instr
+  | Assign : Var -> BoolExpr -> Instr
+  | IfThenElse : BoolExpr -> Instr -> Instr -> Instr
+  | While : BoolExpr -> Instr -> Instr
+  | Begin : LInstr -> Instr
+  with
+  LInstr : Set :=
+  | Fin : LInstr
+  | Seq : Instr -> LInstr -> LInstr
+  .
+
+(* 6.2 *)
+Infix ";" := Seq (at level 80, right associativity).
+
+Variable v1 v2 : Var.
+
+Definition PP : Instr :=
+  Begin (
+    Assign v1 (Bool true);
+    Assign v2 (Not (BoolVar v1));
+    Fin
+  ).
+
+Variable aux : Var.
+
+Definition swap : Instr :=
+  Begin (
+    Assign aux (BoolVar v1);
+    Assign v1 (BoolVar v2);
+    Assign v2 (BoolVar aux);
+    Fin
+  ).
+
+(* 6.3 *)
+Fixpoint eqnat (n1 n2 : nat) : bool :=
+  match n1, n2 with
+    | 0, 0 => true
+    | (S n), (S m) => eqnat n m
+    | _, _ => false
+  end.
+
+Definition update : Memoria -> Var -> Valor -> Memoria :=
+  fun m v w =>
+    fun (var : Var) =>
+      if eqnat v var then w else lookup m var
+  .
+
+End Ejercicio6.
+
+Section Ejercicio7.
+
+
+
+End Ejercicio7.
