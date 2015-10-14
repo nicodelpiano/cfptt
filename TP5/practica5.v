@@ -472,58 +472,56 @@ Proof.
       exact (IHe1 H4 H8).
 
 Qed.
-
+*)
 Lemma e53c :
   forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
     BEval e m w1 /\ BEval e m w2 -> w1 = w2.
 Proof.
   intros.
   destruct H.
-  destruct w1;
-  destruct w2.
-    trivial.
+   induction e.
+    inversion H ; inversion H0.
+    reflexivity.
+    induction b.
+    inversion H ; inversion H0.
+    reflexivity.
+    inversion H ; inversion H0.
+    reflexivity.
+    inversion H; inversion H0; try trivial.
+      destruct H10.
+      rewrite H4.
+      rewrite H9.
+      rewrite H4 in H5.
+      rewrite H9 in H10.
+      exact (IHe1 H5 H10).
 
-    induction e.
-      inversion H.
-      
-    
+      destruct H10.
+      rewrite H4.
+      rewrite H9.
+      rewrite H4 in H5.
+      rewrite H9 in H11.
+      exact (IHe2 H5 H11).
 
-  intros.
-  destruct H.
-  induction H; trivial;
-    inversion H0; trivial.
+      destruct H5.
+      rewrite H4.
+      rewrite H9.
+      rewrite H9 in H10.
+      rewrite H4 in H5.
+      exact (IHe1 H5 H10).
 
-    inversion H0.
-    rewrite H4.
-    trivial.
+      destruct H5.
+      rewrite H4.
+      rewrite H9.
+      rewrite H9 in H10.
+      rewrite H4 in H11.
+      exact (IHe2 H11 H10).
 
-    rewrite <- H4 in H9.
-    trivial.
-
-    destruct H5.
-    rewrite H4 in H5.
-    apply IHBEval in H5.
-    rewrite <- H5 in H9.
-    symmetry.
-    trivial.
-
-    destruct H5.
-    rewrite H4 in H6.
-    rewrite H4.
-    exact (IHBEval H6).
-
-    destruct H4.
-    inversion H0.
-      destruct H4.
-      exact (IHBEval H5).
-
-
-
-  destruct H;
-  destruct w1;
-  destruct w2;
-  destruct H0; inversion H; trivial.
-  
+    inversion H; inversion H0; try trivial;
+      rewrite H4 in H6;
+      rewrite H8 in H2;
+      rewrite H4;
+      rewrite H8;
+      exact (IHe H6 H2).
 Qed.
 
 Lemma e53d :
