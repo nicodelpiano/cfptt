@@ -266,15 +266,14 @@ Qed.
 Inductive SinRepetidos : AB -> Prop :=
   nullABNoRep : SinRepetidos nullAB
   | consABNoRep : forall (a : A) (t1 t2 : AB),
-    SinRepetidos t1 /\
-    SinRepetidos t2 /\
-    (forall (x : A),
-      Pertenece x t1 -> ~ Pertenece x t2) /\
-    (forall (x : A),
-      Pertenece x t2 -> ~ Pertenece x t1) /\
-    ~ Pertenece a t1 /\
-    ~ Pertenece a t2 ->
-    SinRepetidos (consAB a t1 t2).
+    (SinRepetidos t1
+    /\ SinRepetidos t2
+    /\ (forall (x : A), Pertenece x t1 -> ~ Pertenece x t2)
+    /\ (forall (x : A),
+        Pertenece x t2 -> ~ Pertenece x t1)
+    /\ ~ Pertenece a t1
+    /\ ~ Pertenece a t2)
+    -> SinRepetidos (consAB a t1 t2).
 
 End Ejercicio4.
 
@@ -378,9 +377,9 @@ Qed.
 
 Lemma e53b :
   forall (m : Memoria) (e1 e2 : BoolExpr) (w : bool),
-    BEval e1 m false /\
-    BEval e2 m w ->
-    BEval (Or e1 e2) m w.
+    BEval e1 m false
+    /\ BEval e2 m w
+    -> BEval (Or e1 e2) m w.
 Proof.
   intros.
   destruct w.
@@ -539,6 +538,12 @@ Qed.
 *)
 End Ejercicio5.
 
+(**
+If you haveIf you have the hypothesis [H : a = b],
+then you can do [apply (f_equal f) in H]
+it will replace it with [H : f a = f b] 
+**)
+
 Section Ejercicio6.
 
 (* 6.1 *)
@@ -556,7 +561,7 @@ Inductive Instr : Set :=
   .
 
 (* 6.2 *)
-Infix ";" := Seq (at level 80, right associativity).
+Infix ";" := Seq (at level 60, right associativity).
 
 Variable v1 v2 : Var.
 
@@ -595,6 +600,43 @@ End Ejercicio6.
 
 Section Ejercicio7.
 
+(* 6.2 *)
+Infix ";" := Seq (at level 60, right associativity).
+
+Inductive Execute : Instr -> Memoria -> Memoria -> Prop :=
+  | xAss : forall (m : Memoria) (e : BoolExpr)
+    (w : Valor) (v : Var),
+    BEval e m w -> Execute (Assign v e) m (update m v w)
+  | xSkip : forall (m : Memoria),
+    Execute Skip m m
+  | xIfThen : forall (m m1 : Memoria) (c : BoolExpr)
+    (p1 p2 : Instr),
+    BEval c m true /\ Execute p1 m m1 ->
+      Execute (IfThenElse c p1 p2) m m1
+  | xIfElse : forall (m m2 : Memoria) (c : BoolExpr)
+    (p1 p2 : Instr),
+    BEval c m false /\ Execute p2 m m2 ->
+      Execute (IfThenElse c p1 p2) m m2
+  | xWhileTrue : forall (m m1 m2 : Memoria) (c : BoolExpr)
+    (p : Instr),
+    BEval c m true
+    /\ Execute p m m1
+    /\ Execute (While c p) m1 m2
+    -> Execute (While c p) m m2
+  | xWhileFalse : forall (m : Memoria) (c : BoolExpr)
+    (p : Instr),
+    BEval c m false
+    -> Execute (While c p) m m
+  | xBeginEnd m : forall (p : LInstr) (m1 : Memoria),
+    ExecuteLInstr p m m1 -> Execute (Begin p) m m1
+    with
+      ExecuteLInstr : LInstr -> Memoria -> Memoria -> Prop :=
+        | xEmptyBlock m : ExecuteLInstr Fin m m
+        | xNext m :
+          forall (i : Instr) (li : LInstr) (m1 m2 : Memoria),
+          Execute i m m1 /\ ExecuteLInstr li m1 m2
+          -> ExecuteLInstr (i; li) m m2
+  .
 
 
 End Ejercicio7.
