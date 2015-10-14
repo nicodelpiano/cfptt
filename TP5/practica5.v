@@ -449,11 +449,15 @@ Proof.
   intros.
   apply (eorl e1 e2) in H.
   apply enott in H.
-  inversion H.
-  inversion H0.
-  inversion H2.
+  assert (false = true).
+  elim (e53c m (Not (Or e1 e2)) false true).
+    trivial.
+
+    split; trivial.
+
+    discriminate H1.
 Qed.
-*)
+
 End Ejercicio5.
 
 (**
@@ -521,6 +525,7 @@ Section Ejercicio7.
 (* 6.2 *)
 Infix ";" := Seq (at level 60, right associativity).
 
+(* Reescribir con -> en vez de /\ *)
 (* 7.1 *)
 Inductive Execute : Instr -> Memoria -> Memoria -> Prop :=
   | xAss : forall (m : Memoria) (e : BoolExpr)
