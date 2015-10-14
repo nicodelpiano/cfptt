@@ -390,89 +390,6 @@ Proof.
     trivial.
 Qed.
 
-(*
-Lemma e53cAux :
-  forall (m : Memoria) (e : BoolExpr),
-    BEval e m true -> ~ (BEval e m false).
-Proof.
-  unfold not.
-  intros.
-  inversion H.
-    inversion H0.
-      rewrite <- H3 in H1.
-      injection H1.
-      intro.
-      rewrite <- H6 in H7.
-      rewrite H7 in H4.
-      discriminate H4.
-
-      rewrite <- H3 in H1.
-      discriminate H1.
-
-      rewrite <- H5 in H1.
-      discriminate H1.
-
-      rewrite <- H5 in H1.
-      discriminate H1.
-
-      rewrite <- H1 in H0.
-      apply e53a in H0.
-      trivial.
-
-      rewrite <- H2 in H0.
-      apply e53b in H0.
-Qed.
-*)
-
-(*
-Lemma determinismo :
-  forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
-    BEval e m w1 /\ BEval e m w2 ->
-    BEval e m w1 = BEval e m w2.
-Proof.
-  intros.
-  destruct H.
-  induction e.
-  destruct w1;
-  destruct w2; trivial.
-    inversion H.
-    inversion H0.
-    trivial.
-
-    inversion H.
-    inversion H0.
-    trivial.
-
-  destruct w1;
-  destruct w2; trivial.
-    inversion H.
-    inversion H0.
-    rewrite H4.
-    rewrite H2.
-    trivial.
-
-    inversion H.
-    inversion H0.
-    rewrite H4.
-    rewrite H2.
-    trivial.
-
-  destruct w1.
-    destruct w2.
-      trivial.
-
-      
-
-  destruct w1;
-  destruct w2; trivial;
-    inversion H;
-    inversion H0.
-      destruct H8.
-      assert (BEval e1 m true = BEval e1 m false).
-      exact (IHe1 H4 H8).
-
-Qed.
-*)
 Lemma e53c :
   forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
     BEval e m w1 /\ BEval e m w2 -> w1 = w2.
@@ -532,6 +449,9 @@ Proof.
   intros.
   apply (eorl e1 e2) in H.
   apply enott in H.
+  inversion H.
+  inversion H0.
+  inversion H2.
 Qed.
 *)
 End Ejercicio5.
