@@ -14,7 +14,7 @@ Inductive Mem (A : Set) (a : A) : list A -> Prop :=
   | there : forall x : list A, Mem A a x ->  
 forall b : A, Mem A a (cons A b x).
 
-(* 5.1 *)
+(* 1.1 *)
 Theorem not_sn_le_o: forall n:nat, ~ LE (S n) O.
 Proof.
   unfold not.
@@ -22,7 +22,7 @@ Proof.
   inversion H.
 Qed.
 
-(* 5.2 *)
+(* 1.2 *)
 Theorem nil_empty (A:Set): forall a:A, ~ Mem A a (nil A).
 Proof.
   unfold not.
@@ -30,16 +30,16 @@ Proof.
   inversion H.
 Qed.
 
-(* 5.3 *)
-Theorem e53: ~ LE 4 3.
+(* 1.3 *)
+Theorem e13: ~ LE 4 3.
 Proof.
   unfold not.
   intro.
   repeat (inversion_clear H; inversion_clear H0).
 Qed.
 
-(* 5.4 *)
-Theorem e54: forall n:nat, ~ LE (S n) n.
+(* 1.4 *)
+Theorem e14: forall n:nat, ~ LE (S n) n.
 Proof.
   unfold not.
   intros.
@@ -48,13 +48,13 @@ Proof.
   exact (IHn H2).
 Qed.
 
-(* 5.5 *)
-Theorem e55: forall n m p:nat,
+(* 1.5 *)
+Theorem e15: forall n m p:nat,
   LE n m /\ LE m p -> LE n p.
 Proof.
   induction n.
   intros.
-    apply Le_O.
+    constructor.
 
     intros.
     destruct H.
@@ -63,7 +63,7 @@ Proof.
     apply not_sn_le_o in H.
     contradiction.
 
-    apply Le_S.
+    constructor.
     rewrite <- H2 in H.
     inversion H.
     apply (IHn n0 m0).
@@ -278,6 +278,12 @@ Inductive SinRepetidos : AB -> Prop :=
 
 End Ejercicio4.
 
+Section Ejercicio6.
+
+
+
+End Ejercicio6.
+
 Section Ejercicio5.
 
 (* 5.1 *)
@@ -317,8 +323,58 @@ Inductive BEval : BoolExpr -> Memoria -> bool -> Prop :=
       BEval e m false -> BEval (Not e) m true
   .
 
+(* 5.4 *)
+Fixpoint beval (m : Memoria) (b : BoolExpr) : Valor :=
+  match b with
+    | BoolVar v => lookup m v
+    | Bool b => b
+    | Or e1 e2 => orb (beval m e1) (beval m e2)
+    | Not e => negb (beval m e)
+  end.
+
+(* 5.5 *)
+Lemma e55 : forall (m : Memoria) (e : BoolExpr),
+  BEval e m (beval m e).
+Proof.
+  intros.
+  induction e.
+    simpl.
+    apply evar.
+
+    simpl.
+    destruct b.
+      apply eboolt.
+
+      apply eboolf.
+
+    simpl.
+    destruct (beval m e1).
+      simpl.
+      apply (eorl e1 e2 m) in IHe1.
+      trivial.
+
+      simpl.
+      destruct (beval m e2).
+        apply (eorr e1 e2 m) in IHe2.
+        trivial.
+
+        apply (eorrl e1 e2 m).
+        split; trivial.
+
+    simpl.
+    destruct (beval m e).
+      simpl.
+      apply enott.
+      trivial.
+
+      simpl.
+      apply enotf.
+      trivial.
+
+Qed.
+
 (* 5.3 *)
-Lemma e53a: forall (m : Memoria),
+Lemma e53a : forall (m : Memoria),
   ~ (BEval (Bool true) m false).
 Proof.
   unfold not.
@@ -326,7 +382,7 @@ Proof.
   inversion H.
 Qed.
 
-Lemma e53b:
+Lemma e53b :
   forall (m : Memoria) (e1 e2 : BoolExpr) (w : bool),
     BEval e1 m false /\
     BEval e2 m w ->
@@ -341,12 +397,143 @@ Proof.
     trivial.
 Qed.
 
-Lemma e53c:
+(*
+Lemma e53cAux :
+  forall (m : Memoria) (e : BoolExpr),
+    BEval e m true -> ~ (BEval e m false).
+Proof.
+  unfold not.
+  intros.
+  inversion H.
+    inversion H0.
+      rewrite <- H3 in H1.
+      injection H1.
+      intro.
+      rewrite <- H6 in H7.
+      rewrite H7 in H4.
+      discriminate H4.
+
+      rewrite <- H3 in H1.
+      discriminate H1.
+
+      rewrite <- H5 in H1.
+      discriminate H1.
+
+      rewrite <- H5 in H1.
+      discriminate H1.
+
+      rewrite <- H1 in H0.
+      apply e53a in H0.
+      trivial.
+
+      rewrite <- H2 in H0.
+      apply e53b in H0.
+Qed.
+*)
+
+Lemma determinismo :
+  forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
+    BEval e m w1 /\ BEval e m w2 ->
+    BEval e m w1 = BEval e m w2.
+Proof.
+  intros.
+  destruct H.
+  induction e.
+  destruct w1;
+  destruct w2; trivial.
+    inversion H.
+    inversion H0.
+    trivial.
+
+    inversion H.
+    inversion H0.
+    trivial.
+
+  destruct w1;
+  destruct w2; trivial.
+    inversion H.
+    inversion H0.
+    rewrite H4.
+    rewrite H2.
+    trivial.
+
+    inversion H.
+    inversion H0.
+    rewrite H4.
+    rewrite H2.
+    trivial.
+
+  destruct w1;
+  destruct w2; trivial;
+    inversion H;
+    inversion H0.
+      destruct H8.
+      assert (BEval e1 m true = BEval e1 m false).
+      exact (IHe1 H4 H8).
+
+Qed.
+
+Lemma e53c :
   forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
     BEval e m w1 /\ BEval e m w2 -> w1 = w2.
 Proof.
   intros.
+  destruct H.
+  destruct w1;
+  destruct w2.
+    trivial.
+
+    induction e.
+      inversion H.
+      
+    
+
+  intros.
+  destruct H.
+  induction H; trivial;
+    inversion H0; trivial.
+
+    inversion H0.
+    rewrite H4.
+    trivial.
+
+    rewrite <- H4 in H9.
+    trivial.
+
+    destruct H5.
+    rewrite H4 in H5.
+    apply IHBEval in H5.
+    rewrite <- H5 in H9.
+    symmetry.
+    trivial.
+
+    destruct H5.
+    rewrite H4 in H6.
+    rewrite H4.
+    exact (IHBEval H6).
+
+    destruct H4.
+    inversion H0.
+      destruct H4.
+      exact (IHBEval H5).
+
+
+
+  destruct H;
+  destruct w1;
+  destruct w2;
+  destruct H0; inversion H; trivial.
   
+Qed.
+
+Lemma e53d :
+  forall (m : Memoria) (e1 e2 : BoolExpr),
+    BEval e1 m true -> ~ BEval (Not (Or e1 e2)) m true.
+Proof.
+  unfold not.
+  intros.
+  apply (eorl e1 e2) in H.
+  apply enott in H.
 Qed.
 
 End Ejercicio5.
