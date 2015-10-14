@@ -114,31 +114,24 @@ Lemma DeleteAllNotMember : forall (l : List) (x : A),
 Proof.
   unfold not.
   intros.
-  induction l.
-    inversion H.
-
-    inversion H.
-    simpl in H.
-    remember (equal x a) as y.
-    destruct y.
-      exact (IHl H).
-
-      injection H1.
-      intros.
-      symmetry in Heqy.
-      rewrite H2 in Heqy.
-      apply equal2 in Heqy.
-      trivial.
-
-    simpl in H.
-    remember (equal x a) as y.
-    destruct y.
-      exact (IHl H).
-
-      injection H0.
-      intros.
-      rewrite <- H2 in IHl.
-      exact (IHl H1).
+  induction l;
+    inversion H;
+    simpl in H;
+    remember (equal x a) as y;
+    destruct y;
+    [ exact (IHl H)
+    | injection H1;
+      intros;
+      symmetry in Heqy;
+      rewrite H2 in Heqy;
+      apply equal2 in Heqy;
+      trivial
+    | exact (IHl H)
+    | injection H0;
+      intros;
+      rewrite <- H2 in IHl;
+      exact (IHl H1) 
+    ].
 Qed.
 
 (* 3.4 *)
@@ -181,13 +174,11 @@ Proof.
     rewrite <- Heqy in H2.
     contradiction.
 
-    inversion H0.
-    symmetry in Heqy.
-    rewrite H2 in Heqy.
-    apply equal2 in Heqy.
-    trivial.
-    apply setCons in H.
-    apply IHl; trivial.
+    inversion H0;
+    [ symmetry in Heqy;
+      rewrite H2 in Heqy;
+      apply equal2 in Heqy
+    | apply setCons in H; apply IHl]; trivial.
 Qed.
 
 End Ejercicio3.
@@ -225,22 +216,19 @@ Axiom eqGen1 : forall x : A, ~ (eqGen x x) = false.
 (*(negb (eqGen x x)) = false.*)
 
 Lemma e4cAux : forall (t1 t2 : AB) (a b : A),
-  ~ (Pertenece a t1) /\
-  ~ (Pertenece a t2) /\
+  ~ (Pertenece a t1) ->
+  ~ (Pertenece a t2) ->
   eqGen a b = false ->
   Pertenece a (consAB b t1 t2) -> False.
 Proof.
   unfold not.
   intros.
-  destruct H as [H1 [H2 H3]].
-  inversion H0.
-    rewrite H5 in H3.
-    apply eqGen1 in H3.
-    trivial.
-
-    exact (H1 H5).
-
-    exact (H2 H5).
+  inversion H2;
+  [ rewrite H5 in H1;
+    apply eqGen1 in H1;
+    trivial
+  | exact (H H5)
+  | exact (H0 H5) ].
 Qed.
 
 Lemma BorrarNoPertenece: forall (x : AB) (a : A),
@@ -248,18 +236,15 @@ Lemma BorrarNoPertenece: forall (x : AB) (a : A),
 Proof.
   unfold not.
   intros.
-  induction x.
-    inversion H.
-
-    simpl in H.
-    remember (eqGen a a0) as y.
-    destruct y.
-      inversion H.
-
-      symmetry in Heqy.
-      apply (e4cAux (Borrar x1 a) (Borrar x2 a) a a0);
-        [ unfold not; split; [ | split]
-        | ]; trivial.
+  induction x;
+  [ inversion H
+  | simpl in H;
+    remember (eqGen a a0) as y;
+    destruct y;
+      [ inversion H
+      | symmetry in Heqy;
+        apply (e4cAux (Borrar x1 a) (Borrar x2 a) a a0)
+      ]; trivial].
 Qed. 
 
 (* 4.d *)
@@ -269,8 +254,7 @@ Inductive SinRepetidos : AB -> Prop :=
     (SinRepetidos t1
     /\ SinRepetidos t2
     /\ (forall (x : A), Pertenece x t1 -> ~ Pertenece x t2)
-    /\ (forall (x : A),
-        Pertenece x t2 -> ~ Pertenece x t1)
+    /\ (forall (x : A), Pertenece x t2 -> ~ Pertenece x t1)
     /\ ~ Pertenece a t1
     /\ ~ Pertenece a t2)
     -> SinRepetidos (consAB a t1 t2).
@@ -308,7 +292,7 @@ Inductive BEval : BoolExpr -> Memoria -> bool -> Prop :=
   | eorr : forall (e1 e2 : BoolExpr) (m : Memoria),
       BEval e2 m true -> BEval (Or e1 e2) m true
   | eorrl : forall (e1 e2 : BoolExpr) (m : Memoria),
-      BEval e1 m false /\ BEval e2 m false ->
+      BEval e1 m false -> BEval e2 m false ->
         BEval (Or e1 e2) m false
   | enott : forall (e : BoolExpr) (m : Memoria),
       BEval e m true -> BEval (Not e) m false
@@ -330,40 +314,23 @@ Lemma e55 : forall (m : Memoria) (e : BoolExpr),
   BEval e m (beval m e).
 Proof.
   intros.
-  induction e.
-    simpl.
+  induction e;
+  simpl.
     apply evar.
 
-    simpl.
-    destruct b.
-      apply eboolt.
+    destruct b; [ apply eboolt | apply eboolf ].
 
-      apply eboolf.
+    destruct (beval m e1);
+    simpl;
+    [ apply (eorl e1 e2 m) in IHe1;
+      trivial
+    | destruct (beval m e2);
+      [ apply (eorr e1 e2 m) in IHe2
+      | apply (eorrl e1 e2 m) ]; trivial
+    ].
 
-    simpl.
-    destruct (beval m e1).
-      simpl.
-      apply (eorl e1 e2 m) in IHe1.
-      trivial.
-
-      simpl.
-      destruct (beval m e2).
-        apply (eorr e1 e2 m) in IHe2.
-        trivial.
-
-        apply (eorrl e1 e2 m).
-        split; trivial.
-
-    simpl.
-    destruct (beval m e).
-      simpl.
-      apply enott.
-      trivial.
-
-      simpl.
-      apply enotf.
-      trivial.
-
+    destruct (beval m e);
+    simpl; [ apply enott | apply enotf ]; trivial.
 Qed.
 
 (* 5.3 *)
@@ -378,60 +345,56 @@ Qed.
 Lemma e53b :
   forall (m : Memoria) (e1 e2 : BoolExpr) (w : bool),
     BEval e1 m false
-    /\ BEval e2 m w
+    -> BEval e2 m w
     -> BEval (Or e1 e2) m w.
 Proof.
   intros.
-  destruct w.
-    apply eorr.
-    apply H.
-
-    apply eorrl.
-    trivial.
+  destruct w; [ apply eorr | apply eorrl]; trivial.
 Qed.
 
 Lemma e53c :
   forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
-    BEval e m w1 /\ BEval e m w2 -> w1 = w2.
+    BEval e m w1 -> BEval e m w2 -> w1 = w2.
 Proof.
   intros.
-  destruct H.
    induction e.
-    inversion H ; inversion H0.
-    reflexivity.
-    induction b.
-    inversion H ; inversion H0.
-    reflexivity.
-    inversion H ; inversion H0.
-    reflexivity.
-    inversion H; inversion H0; try trivial.
-      destruct H10.
-      rewrite H4.
-      rewrite H9.
-      rewrite H4 in H5.
-      rewrite H9 in H10.
-      exact (IHe1 H5 H10).
+     inversion H ; inversion H0.
+     reflexivity.
+     induction b.
+     inversion H ; inversion H0.
+     reflexivity.
+     inversion H ; inversion H0.
+     reflexivity.
+     inversion H; inversion H0.
+       trivial.
 
-      destruct H10.
-      rewrite H4.
-      rewrite H9.
-      rewrite H4 in H5.
-      rewrite H9 in H11.
-      exact (IHe2 H5 H11).
+       trivial.
 
-      destruct H5.
-      rewrite H4.
-      rewrite H9.
-      rewrite H9 in H10.
-      rewrite H4 in H5.
-      exact (IHe1 H5 H10).
+       destruct H10.
+       rewrite H4.
+       rewrite H4 in H5.
+       exact (IHe1 H5 H8).
 
-      destruct H5.
-      rewrite H4.
-      rewrite H9.
-      rewrite H9 in H10.
-      rewrite H4 in H11.
-      exact (IHe2 H11 H10).
+       trivial.
+
+       trivial.
+
+       destruct H10.
+       rewrite H4.
+       rewrite H4 in H5.
+       exact (IHe2 H5 H11).
+
+       destruct H5.
+       rewrite H10.
+       rewrite H10 in H11.
+       exact (IHe1 H3 H11).
+
+       destruct H5.
+       rewrite H10.
+       rewrite H10 in H11.
+       exact (IHe2 H6 H11).
+
+       trivial.
 
     inversion H; inversion H0; try trivial;
       rewrite H4 in H6;
@@ -450,12 +413,8 @@ Proof.
   apply (eorl e1 e2) in H.
   apply enott in H.
   assert (false = true).
-  elim (e53c m (Not (Or e1 e2)) false true).
-    trivial.
-
-    split; trivial.
-
-    discriminate H1.
+  elim (e53c m (Not (Or e1 e2)) false true); trivial.
+  discriminate H1.
 Qed.
 
 End Ejercicio5.
@@ -525,7 +484,6 @@ Section Ejercicio7.
 (* 6.2 *)
 Infix ";" := Seq (at level 60, right associativity).
 
-(* Reescribir con -> en vez de /\ *)
 (* 7.1 *)
 Inductive Execute : Instr -> Memoria -> Memoria -> Prop :=
   | xAss : forall (m : Memoria) (e : BoolExpr)
@@ -598,16 +556,26 @@ Qed.
 (* 7.6 *)
 Lemma e76 : forall (m m1 : Memoria) (v1 v2 : Var),
   v1 <> v2 -> Execute (PP v1 v2) m m1 ->
-  lookup m1 v2 = false /\ lookup m1 v1 = true.
+  lookup m1 v1 = true /\ lookup m1 v2 = false.
 Proof.
   intros.
   split.
   inversion_clear H0.
   inversion_clear H1.
-  inversion H2.
+  inversion_clear H0.
+  assert (BEval (BoolVar v1) m1 (lookup m1 v1)).
+  apply (evar v1 m1).
+  inversion_clear H2. (* evar : forall (v : Var) (m : Memoria) *)
+  inversion H0.
+  destruct w.
+  apply (xAss m (Bool true) w v2) in H2.
+  (*
+   forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
+    BEval e m w1 /\ BEval e m w2 -> w1 = w2.
+   *)
+  
 Qed.
   
-
 (* 7.5 *)
 Lemma e75 : forall (c : BoolExpr) (p : Instr) (m m1 : Memoria),
   Execute (Begin (IfThenElse c p Skip; While c p; Fin)) m m1
@@ -631,7 +599,7 @@ Proof.
   inversion_clear H1.
   inversion_clear H.
 Qed.
-
+(**
 (* 7.5 *)
 Lemma e75 : forall (c : BoolExpr) (p : Instr) (m m1 : Memoria),
   ExecuteLInstr (IfThenElse c p Skip; While c p; Fin) m m1
@@ -644,6 +612,6 @@ Proof.
   apply (xWhileTrue m m2 m1 c).
   inversion_clear H0.
   inversion_clear H1.
-Qed.
+Qed.**)
 
 End Ejercicio7.
