@@ -292,8 +292,8 @@ Inductive BEval : BoolExpr -> Memoria -> bool -> Prop :=
   | eorr : forall (e1 e2 : BoolExpr) (m : Memoria),
       BEval e2 m true -> BEval (Or e1 e2) m true
   | eorrl : forall (e1 e2 : BoolExpr) (m : Memoria),
-      BEval e1 m false -> BEval e2 m false ->
-        BEval (Or e1 e2) m false
+      BEval e1 m false -> BEval e2 m false
+      -> BEval (Or e1 e2) m false
   | enott : forall (e : BoolExpr) (m : Memoria),
       BEval e m true -> BEval (Not e) m false
   | enotf : forall (e : BoolExpr) (m : Memoria),
@@ -493,12 +493,12 @@ Inductive Execute : Instr -> Memoria -> Memoria -> Prop :=
     Execute Skip m m
   | xIfThen : forall (m m1 : Memoria) (c : BoolExpr)
     (p1 p2 : Instr),
-    BEval c m true -> Execute p1 m m1 ->
-      Execute (IfThenElse c p1 p2) m m1
+    BEval c m true -> Execute p1 m m1
+    -> Execute (IfThenElse c p1 p2) m m1
   | xIfElse : forall (m m2 : Memoria) (c : BoolExpr)
     (p1 p2 : Instr),
-    BEval c m false -> Execute p2 m m2 ->
-      Execute (IfThenElse c p1 p2) m m2
+    BEval c m false -> Execute p2 m m2
+    -> Execute (IfThenElse c p1 p2) m m2
   | xWhileTrue : forall (m m1 m2 : Memoria) (c : BoolExpr)
     (p : Instr),
     BEval c m true
@@ -553,11 +553,38 @@ Proof.
   reflexivity.
 Qed.
 
+(**
+Lemma e76_aux : forall (m m1 : Memoria) (v : Var) (val : Valor),
+  update m v val = m1 -> lookup m1 v = val.
+Proof.
+  intros.
+  destruct val.
+    Check e53c.
+    apply (e53c m1 (BoolVar v)).
+      apply (evar v m1).
+
+      
+Qed.
+**)
+
 (* 7.6 *)
 Lemma e76 : forall (m m1 : Memoria) (v1 v2 : Var),
-  v1 <> v2 -> Execute (PP v1 v2) m m1 ->
-  lookup m1 v1 = true /\ lookup m1 v2 = false.
+  v1 <> v2 -> Execute (PP v1 v2) m m1
+  -> lookup m1 v1 = true /\ lookup m1 v2 = false.
 Proof.
+  unfold not.
+  intros.
+  split.
+    inversion_clear H0.
+    inversion_clear H1.
+    inversion H0.
+    rewrite <- H5 in H0.
+    apply (e53c m1 (BoolVar v1)).
+      apply evar.
+
+      Check e53c.
+      apply (e53c m1 (BoolVar v1)) in H1.
+
   intros.
   split.
   inversion_clear H0.
@@ -568,7 +595,8 @@ Proof.
   inversion_clear H2. (* evar : forall (v : Var) (m : Memoria) *)
   inversion H0.
   destruct w.
-  apply (xAss m (Bool true) w v2) in H2.
+
+
   (*
    forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
     BEval e m w1 /\ BEval e m w2 -> w1 = w2.
@@ -599,19 +627,5 @@ Proof.
   inversion_clear H1.
   inversion_clear H.
 Qed.
-(**
-(* 7.5 *)
-Lemma e75 : forall (c : BoolExpr) (p : Instr) (m m1 : Memoria),
-  ExecuteLInstr (IfThenElse c p Skip; While c p; Fin) m m1
-  -> Execute (While c p) m m1.
-Proof.
-  intros.
-  inversion H.
-  inversion H1.
-  inversion H.
-  apply (xWhileTrue m m2 m1 c).
-  inversion_clear H0.
-  inversion_clear H1.
-Qed.**)
 
 End Ejercicio7.
