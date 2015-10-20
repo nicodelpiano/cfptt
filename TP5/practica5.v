@@ -567,6 +567,32 @@ Proof.
 Qed.
 **)
 
+(* 7.5 *)
+Lemma e75 : forall (c : BoolExpr) (p : Instr) (m m1 : Memoria),
+  Execute (Begin (IfThenElse c p Skip; While c p; Fin)) m m1
+  -> Execute (While c p) m m1.
+Proof.
+  intros.
+  inversion H.
+  clear m0 m2 H2 H3 H0 p0.
+  inversion H1.
+  clear m0 m3 i H0 li H2 H4 H5.
+  inversion H6.
+  clear i li m0 m4 H0 H2 H5 H7.
+  inversion H8.
+  rewrite H5 in H4.
+  clear m0 H2 H8 H5 m3.
+  inversion H3.
+    clear m0 c0 p1 p2 m3 H5 H8 H0 H2 H7.
+    apply (xWhileTrue m m2 m1 c); trivial.
+
+    clear m0 m3 c0 p1 p2 H0 H2 H7 H5 H8.
+    inversion H10.
+    rewrite <- H5.
+    rewrite <- H5 in H4.
+    trivial.
+Qed.
+
 (* 7.6 *)
 Lemma e76 : forall (m m1 : Memoria) (v1 v2 : Var),
   v1 <> v2 -> Execute (PP v1 v2) m m1
@@ -577,12 +603,113 @@ Proof.
   split.
     inversion_clear H0.
     inversion_clear H1.
+    inversion_clear H0.
+    inversion H1.
+    clear H3 m0.
+    (* trabajando con H2 *)
+    inversion H2.
+    clear m0 m4 H3 H6 H7 i li H0.
+    inversion H8.
+    rewrite H6 in H5.
+    rewrite H6 in H8.
+    clear m0 H3 H6.
+    inversion H5.
+    clear H0 v e H6 H3.
+    inversion H9.
+    clear e m4 H0 H6.
+    
+
+
+    inversion_clear H0.
+    inversion_clear H1.
+    inversion_clear H2.
+    inversion H3.
+    rewrite H5 in H1.
+    clear H4 m0 m3 H3 H5.
+    inversion_clear H0.
+    inversion_clear H1.
+    inversion H2.
+    clear H3 m0.
+    inversion H0.
+    clear H1 H5.
+
+    inversion H3.
+    rewrite H5 in H0.
+    clear H4 H3 m0 m3 H5.
+    inversion H1.
+    clear m0 H3.
+    inversion H0.
+    rewrite H6.
+    clear H2 H5 H3 H6.
+    inversion_clear H7.
+    inversion_clear H2.
+    inversion_clear H0.
+    
+    apply (e53c m2 (BoolVar v1)).
+
+
+
+    inversion_clear H0.
+    inversion_clear H1.
+    inversion H0.
+    rewrite <- H5 in H0.
+    rewrite <- H5 in H2.
+    clear H3 H4 m0 m2 H5.
+    inversion_clear H0.
+    clear w0 H3.
+    inversion H6.
+    clear m0 H3.
+    inversion H2.
+    clear i li m0 m3 H0 H3 H7 H8.
+    inversion H9.
+    clear H3 m0.
+    rewrite H7 in H9.
+    rewrite H7 in H5.
+    clear m2 H7.
+    inversion H5.
+    clear H0 H7 H3 e0 m0 v0.
+    inversion H10.
+    clear e0 H0 H7 m0.
+    inversion H3.
+    clear v0 H7 H0 H8.
+    rewrite <- H4.
+    clear H11 m0.
+    
+    apply (e53c m (BoolVar v1)).
+      apply (evar).
+
+    injection.
+    clear m0 H3.
+    inversion_clear H2.
+    inversion H3.
+    rewrite H6 in H0.
+    rewrite H6 in H3.
+    clear H5 H6 m3 m0.
+    inversion H0.
+    rewrite <- H7 in H0.
+    rewrite <- H7 in H3.
+    inversion_clear H0.
+    inversion_clear H9.
+    clear m0 w1 H5.
+    apply (e53c (update m2 v2 false) (BoolVar v1)).
+
+
+    inversion H9.
+    inversion H8.
+    
+
+    inversion_clear H0.
+    inversion_clear H1.
     inversion H0.
     rewrite <- H5 in H0.
     apply (e53c m1 (BoolVar v1)).
       apply evar.
 
       Check e53c.
+      inversion H6.
+      inversion H0.
+      inversion H2.
+      inversion H16.`
       apply (e53c m1 (BoolVar v1)) in H1.
 
   intros.
@@ -602,30 +729,6 @@ Proof.
     BEval e m w1 /\ BEval e m w2 -> w1 = w2.
    *)
   
-Qed.
-  
-(* 7.5 *)
-Lemma e75 : forall (c : BoolExpr) (p : Instr) (m m1 : Memoria),
-  Execute (Begin (IfThenElse c p Skip; While c p; Fin)) m m1
-  -> Execute (While c p) m m1.
-Proof.
-  intros.
-  inversion_clear H.
-  inversion_clear H0.
-  inversion_clear H.
-    apply (xWhileTrue m m2 m1 c).
-    trivial.
-
-    trivial.
-
-    
-
-  apply (xWhileTrue m1 m m1 c).
-
-  inversion_clear H0.
-  inversion_clear H.  
-  inversion_clear H1.
-  inversion_clear H.
 Qed.
 
 End Ejercicio7.
