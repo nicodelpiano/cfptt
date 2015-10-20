@@ -558,10 +558,18 @@ Lemma e76_aux : forall (m m1 : Memoria) (v : Var) (val : Valor),
   update m v val = m1 -> lookup m1 v = val.
 Proof.
   intros.
-  destruct val.
+  assert (BEval (BoolVar v) m1 (beval m1 (BoolVar v))).
+  apply (e55 m1 (BoolVar v)).
+  rewrite <- H in H0.
+  simpl in H0.
     Check e53c.
     apply (e53c m1 (BoolVar v)).
       apply (evar v m1).
+
+      rewrite <- H.
+      simpl in H0.
+      inversion H0.
+      
 
       
 Qed.
@@ -603,6 +611,73 @@ Proof.
   split.
     inversion_clear H0.
     inversion_clear H1.
+    inversion_clear H2.
+    inversion H3.
+    rewrite H5 in H1.
+    clear m0 H3 H4 H5 m3.
+    inversion H0.
+    clear H2 H4 H3 m0 e.
+    rewrite <- H5 in H0.
+    rewrite <- H5 in H1.
+    (*clear H5. *)
+    inversion H6.
+    clear m0 H3.
+    rewrite <- H4 in H6.
+    rewrite <- H4 in H1.
+    rewrite <- H4 in H0.
+    rewrite <- H4 in H5.
+    clear H4 w.
+    inversion_clear H1.
+    inversion_clear H2.
+    Check e55.
+    assert (BEval (BoolVar v1) (update (update m v1 true) v2 false)
+      (beval (update (update m v1 true) v2 false) (BoolVar v1))).
+    apply e55.
+    simpl in H2.
+    apply (e53c (update m2 v2 false) (BoolVar v1)).
+      rewrite H5.
+      rewrite H5 in H2.
+      trivial.
+
+  unfold not.
+  intros.
+  split.
+    inversion_clear H0.
+    Check xNext.
+    inversion_clear H1.
+    inversion_clear H2.
+    inversion H3.
+    rewrite H5 in H1.
+    clear m0 m3 H4 H5 H3.
+    inversion_clear H1.
+      inversion_clear H2.
+      inversion_clear H0.
+      inversion H2.
+      rewrite <- H4 in H2.
+      clear H3 m0 w0 H4 w.
+      Check e53c.
+      apply (e53c m2 (BoolVar v1)); try apply evar; try trivial.
+      Check xAss.
+ 
+
+    inversion_clear H0.
+    inversion_clear H1.
+    inversion_clear H2.
+    inversion H3.
+    rewrite H5 in H1.
+    clear m0 H4 H5 H3 m3.
+    inversion_clear H1.
+    inversion_clear H2.
+    Check xAss.
+    apply (xAss m2 (BoolVar v1) true v2) in H1.
+    inversion H1.
+    inversion H5.
+    rewrite <- H9 in H5.
+    inversion H5.    
+    Check e53c.
+
+    inversion_clear H0.
+    inversion_clear H1.
     inversion_clear H0.
     inversion H1.
     clear H3 m0.
@@ -615,10 +690,19 @@ Proof.
     clear m0 H3 H6.
     inversion H5.
     clear H0 v e H6 H3.
-    inversion H9.
-    clear e m4 H0 H6.
-    
+      inversion H9.
+      clear e m4 H0 H6.
+      inversion H3.
+      clear v m4 H6 H0.
+      Check e53c.
+      apply (e53c m1 (BoolVar v1)).
+        rewrite <- H10 in H7.
+        rewrite H7.
+        apply evar.
 
+        rewrite <- H7.
+        rewrite H12.
+        apply evar.
 
     inversion_clear H0.
     inversion_clear H1.
