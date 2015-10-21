@@ -693,8 +693,11 @@ Proof.
       rewrite lookup1 in H7.
       Check e53c.
       apply (e53c (update m v1 true) (BoolVar v1)); trivial.
+Qed.
+(**
 
-
+INTENTOS FALLIDOS :P
+:
         reflexivity.
 
         inversion H2.
@@ -898,5 +901,5 @@ Proof.
    *)
   
 Qed.
-
+**)
 End Ejercicio7.
