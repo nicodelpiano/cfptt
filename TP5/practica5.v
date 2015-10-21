@@ -601,14 +601,61 @@ Proof.
     trivial.
 Qed.
 
+(* Lemita *)
+(**
+Lemma e76_aux : forall (m m1 : Memoria) (v : Var),
+  Execute (Begin (Assign v (Bool true); Fin)) m m1
+  -> lookup m1 v = true.
+Proof.
+  intros.
+  inversion_clear H.
+  inversion_clear H0.
+  inversion H1.
+  rewrite H3 in H.
+  rewrite H3 in H1.
+  clear m0 m2 H2 H3.
+  inversion H.
+  inversion H5.
+  clear H0 H2 H3 m2 H7 v0 e m0 m2.
+
+  destruct w.
+  Check e53c.
+  apply (e53c m (Bool true)); try trivial.
+    case (lookup (update m v true) v); trivial.
+Qed.
+**)
+
+Axiom lookup1 : forall (m : Memoria) (v : Var) (val : Valor),
+  lookup (update m v val) v = val.
+Axiom lookup2 : forall (m : Memoria) (v1 v2 : Var) (val : Valor),
+  v1 <> v2 -> lookup (update m v1 val) v2 = lookup m v2.
+
 (* 7.6 *)
 Lemma e76 : forall (m m1 : Memoria) (v1 v2 : Var),
   v1 <> v2 -> Execute (PP v1 v2) m m1
   -> lookup m1 v1 = true /\ lookup m1 v2 = false.
 Proof.
-  unfold not.
+  (**unfold not.
   intros.
   split.
+    inversion_clear H0.
+    inversion_clear H1.
+    inversion_clear H0.
+    inversion H1.
+    clear m0 H3.
+    inversion_clear H2.
+    inversion H3.
+    rewrite H6 in H0.
+    clear H3 m0 H5 H6 m3.
+    inversion H0.
+    clear H5 H2 H3 v e m0.
+    inversion H7.
+    clear H2 H5 m0 e.
+    rewrite (lookup2 m2 v2 v1 false).
+ **)
+
+  unfold not.
+  intros.
     inversion_clear H0.
     inversion_clear H1.
     inversion_clear H2.
@@ -628,16 +675,53 @@ Proof.
     rewrite <- H4 in H5.
     clear H4 w.
     inversion_clear H1.
-    inversion_clear H2.
+(*    inversion_clear H2. *)
+
+    split.
+      rewrite lookup2.
+      rewrite lookup1.
+      reflexivity.
+      intuition.
+
+      rewrite lookup1.
+      destruct w; try trivial.
+      inversion H2.
+      assert (BEval (BoolVar v1) (update m v1 true)
+      (beval (update m v1 true) (BoolVar v1))).
+    apply e55.
+      simpl in H7.
+      rewrite lookup1 in H7.
+      Check e53c.
+      apply (e53c (update m v1 true) (BoolVar v1)); trivial.
+
+
+        reflexivity.
+
+        inversion H2.
+          rewrite H7.
+          rewrite H11.
+          trivial.
+        
+
+    split.
+      rewrite lookup2.
+      rewrite lookup1.
+      reflexivity.
+      intuition.
+
+      rewrite lookup1.
     Check e55.
-    assert (BEval (BoolVar v1) (update (update m v1 true) v2 false)
-      (beval (update (update m v1 true) v2 false) (BoolVar v1))).
+    assert (BEval (BoolVar v1) (update m2 v2 false)
+      (beval (update m2 v2 false) (BoolVar v1))).
     apply e55.
     simpl in H2.
     apply (e53c (update m2 v2 false) (BoolVar v1)).
       rewrite H5.
-      rewrite H5 in H2.
       trivial.
+
+      apply (lookup2) .
+      
+
 
   unfold not.
   intros.
