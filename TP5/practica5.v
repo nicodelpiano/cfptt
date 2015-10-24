@@ -357,51 +357,44 @@ Lemma e53c :
     BEval e m w1 -> BEval e m w2 -> w1 = w2.
 Proof.
   intros.
-   induction e.
-     inversion H ; inversion H0.
-     reflexivity.
-     induction b.
-     inversion H ; inversion H0.
-     reflexivity.
-     inversion H ; inversion H0.
-     reflexivity.
-     inversion H; inversion H0.
-       trivial.
-
-       trivial.
-
-       destruct H10.
-       rewrite H4.
-       rewrite H4 in H5.
-       exact (IHe1 H5 H8).
-
-       trivial.
-
-       trivial.
-
-       destruct H10.
-       rewrite H4.
-       rewrite H4 in H5.
-       exact (IHe2 H5 H11).
-
-       destruct H5.
-       rewrite H10.
-       rewrite H10 in H11.
-       exact (IHe1 H3 H11).
-
-       destruct H5.
-       rewrite H10.
-       rewrite H10 in H11.
-       exact (IHe2 H6 H11).
-
-       trivial.
-
-    inversion H; inversion H0; try trivial;
-      rewrite H4 in H6;
-      rewrite H8 in H2;
+  induction e;
+  [
+    inversion H ; inversion H0;
+    reflexivity
+  |
+    destruct b; inversion H ; inversion H0;
+    reflexivity
+  |
+    inversion H; inversion H0; trivial;
+    [
+      destruct H10;
       rewrite H4;
-      rewrite H8;
-      exact (IHe H6 H2).
+      rewrite H4 in H5;
+      exact (IHe1 H5 H8)
+    |
+      destruct H10;
+      rewrite H4;
+      rewrite H4 in H5;
+      exact (IHe2 H5 H11)
+    |
+      destruct H5;
+      rewrite H10;
+      rewrite H10 in H11;
+      exact (IHe1 H3 H11)
+    |
+      destruct H5;
+      rewrite H10;
+      rewrite H10 in H11;
+      exact (IHe2 H6 H11)
+    ]
+  |
+    inversion H; inversion H0; trivial;
+    rewrite H4 in H6;
+    rewrite H8 in H2;
+    rewrite H4;
+    rewrite H8;
+    exact (IHe H6 H2)
+  ].
 Qed.
 
 Lemma e53d :
@@ -465,13 +458,6 @@ Definition swap : Instr :=
 
 (* 6.3 *)
 Require Import Coq.Arith.EqNat.
-
-Fixpoint eqnat (n1 n2 : nat) : bool :=
-  match n1, n2 with
-    | 0, 0 => true
-    | (S n), (S m) => eqnat n m
-    | _, _ => false
-  end.
 
 Definition update : Memoria -> Var -> Valor -> Memoria :=
   fun m v w =>
@@ -555,28 +541,6 @@ Proof.
   reflexivity.
 Qed.
 
-(**
-Lemma e76_aux : forall (m m1 : Memoria) (v : Var) (val : Valor),
-  update m v val = m1 -> lookup m1 v = val.
-Proof.
-  intros.
-  assert (BEval (BoolVar v) m1 (beval m1 (BoolVar v))).
-  apply (e55 m1 (BoolVar v)).
-  rewrite <- H in H0.
-  simpl in H0.
-    Check e53c.
-    apply (e53c m1 (BoolVar v)).
-      apply (evar v m1).
-
-      rewrite <- H.
-      simpl in H0.
-      inversion H0.
-      
-
-      
-Qed.
-**)
-
 (* 7.5 *)
 Lemma e75 : forall (c : BoolExpr) (p : Instr) (m m1 : Memoria),
   Execute (Begin (IfThenElse c p Skip; While c p; Fin)) m m1
@@ -603,30 +567,7 @@ Proof.
     trivial.
 Qed.
 
-(* Lemita *)
-(**
-Lemma e76_aux : forall (m m1 : Memoria) (v : Var),
-  Execute (Begin (Assign v (Bool true); Fin)) m m1
-  -> lookup m1 v = true.
-Proof.
-  intros.
-  inversion_clear H.
-  inversion_clear H0.
-  inversion H1.
-  rewrite H3 in H.
-  rewrite H3 in H1.
-  clear m0 m2 H2 H3.
-  inversion H.
-  inversion H5.
-  clear H0 H2 H3 m2 H7 v0 e m0 m2.
-
-  destruct w.
-  Check e53c.
-  apply (e53c m (Bool true)); try trivial.
-    case (lookup (update m v true) v); trivial.
-Qed.
-**)
-
+(* Lemas auxiliares *)
 Lemma lookup1 : forall (m : Memoria) (v : Var) (val : Valor),
   lookup (update m v val) v = val.
 Proof.
@@ -647,24 +588,6 @@ Proof.
   rewrite H.
   unfold lookup.
   reflexivity.
-Qed.
-
-Lemma beq_nat_sym : forall (n m : nat),
-  beq_nat n m = beq_nat m n.
-Proof.
-  induction n.
-  induction m.
-    reflexivity.
-
-    simpl.
-    reflexivity.
-  intro.
-  induction m.
-    simpl.
-    reflexivity.
-
-    simpl.
-    apply IHn.
 Qed.
 
 (* 7.6 *)
