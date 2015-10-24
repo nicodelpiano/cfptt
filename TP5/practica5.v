@@ -280,7 +280,7 @@ Definition Memoria : Set := Var -> Valor.
 Definition lookup : Memoria -> Var -> Valor :=
   fun f v => f v.
 
-Inductive BEval : BoolExpr -> Memoria -> bool -> Prop :=
+Inductive BEval : BoolExpr -> Memoria -> Valor -> Prop :=
   | evar : forall (v : Var) (m : Memoria),
       BEval (BoolVar v) m (lookup m v)
   | eboolt : forall (m : Memoria),
@@ -349,7 +349,7 @@ Lemma e53b :
     -> BEval (Or e1 e2) m w.
 Proof.
   intros.
-  destruct w; [ apply eorr | apply eorrl]; trivial.
+  destruct w; [ apply eorr | apply eorrl ]; trivial.
 Qed.
 
 Lemma e53c :
@@ -464,6 +464,8 @@ Definition swap : Instr :=
   ).
 
 (* 6.3 *)
+Require Import Coq.Arith.EqNat.
+
 Fixpoint eqnat (n1 n2 : nat) : bool :=
   match n1, n2 with
     | 0, 0 => true
@@ -474,7 +476,7 @@ Fixpoint eqnat (n1 n2 : nat) : bool :=
 Definition update : Memoria -> Var -> Valor -> Memoria :=
   fun m v w =>
     fun (var : Var) =>
-      if eqnat v var then w else lookup m var
+      if beq_nat v var then w else lookup m var
   .
 
 End Ejercicio6.
@@ -625,281 +627,84 @@ Proof.
 Qed.
 **)
 
-Axiom lookup1 : forall (m : Memoria) (v : Var) (val : Valor),
+Lemma lookup1 : forall (m : Memoria) (v : Var) (val : Valor),
   lookup (update m v val) v = val.
-Axiom lookup2 : forall (m : Memoria) (v1 v2 : Var) (val : Valor),
+Proof.
+  intros.
+  unfold lookup.
+  unfold update.
+  rewrite <- beq_nat_refl.
+  reflexivity.
+Qed.
+
+Lemma lookup2 : forall (m : Memoria) (v1 v2 : Var) (val : Valor),
   v1 <> v2 -> lookup (update m v1 val) v2 = lookup m v2.
+Proof.
+  intros.
+  unfold lookup.
+  unfold update.
+  apply beq_nat_false_iff in H.
+  rewrite H.
+  unfold lookup.
+  reflexivity.
+Qed.
+
+Lemma beq_nat_sym : forall (n m : nat),
+  beq_nat n m = beq_nat m n.
+Proof.
+  induction n.
+  induction m.
+    reflexivity.
+
+    simpl.
+    reflexivity.
+  intro.
+  induction m.
+    simpl.
+    reflexivity.
+
+    simpl.
+    apply IHn.
+Qed.
 
 (* 7.6 *)
 Lemma e76 : forall (m m1 : Memoria) (v1 v2 : Var),
   v1 <> v2 -> Execute (PP v1 v2) m m1
   -> lookup m1 v1 = true /\ lookup m1 v2 = false.
-Proof.
-  (**unfold not.
-  intros.
-  split.
-    inversion_clear H0.
-    inversion_clear H1.
-    inversion_clear H0.
-    inversion H1.
-    clear m0 H3.
-    inversion_clear H2.
-    inversion H3.
-    rewrite H6 in H0.
-    clear H3 m0 H5 H6 m3.
-    inversion H0.
-    clear H5 H2 H3 v e m0.
-    inversion H7.
-    clear H2 H5 m0 e.
-    rewrite (lookup2 m2 v2 v1 false).
- **)
-
+Proof. 
   unfold not.
   intros.
-    inversion_clear H0.
-    inversion_clear H1.
-    inversion_clear H2.
-    inversion H3.
-    rewrite H5 in H1.
-    clear m0 H3 H4 H5 m3.
-    inversion H0.
-    clear H2 H4 H3 m0 e.
-    rewrite <- H5 in H0.
-    rewrite <- H5 in H1.
-    (*clear H5. *)
-    inversion H6.
-    clear m0 H3.
-    rewrite <- H4 in H6.
-    rewrite <- H4 in H1.
-    rewrite <- H4 in H0.
-    rewrite <- H4 in H5.
-    clear H4 w.
-    inversion_clear H1.
-(*    inversion_clear H2. *)
-
-    split.
-      rewrite lookup2.
-      rewrite lookup1.
-      reflexivity.
-      intuition.
-
-      rewrite lookup1.
-      destruct w; try trivial.
-      inversion H2.
-      assert (BEval (BoolVar v1) (update m v1 true)
-      (beval (update m v1 true) (BoolVar v1))).
-    apply e55.
-      simpl in H7.
-      rewrite lookup1 in H7.
-      Check e53c.
-      apply (e53c (update m v1 true) (BoolVar v1)); trivial.
-Qed.
-(**
-
-INTENTOS FALLIDOS :P
-:
-        reflexivity.
-
-        inversion H2.
-          rewrite H7.
-          rewrite H11.
-          trivial.
-        
-
-    split.
-      rewrite lookup2.
-      rewrite lookup1.
-      reflexivity.
-      intuition.
-
-      rewrite lookup1.
-    Check e55.
-    assert (BEval (BoolVar v1) (update m2 v2 false)
-      (beval (update m2 v2 false) (BoolVar v1))).
-    apply e55.
-    simpl in H2.
-    apply (e53c (update m2 v2 false) (BoolVar v1)).
-      rewrite H5.
-      trivial.
-
-      apply (lookup2) .
-      
-
-
-  unfold not.
-  intros.
-  split.
-    inversion_clear H0.
-    Check xNext.
-    inversion_clear H1.
-    inversion_clear H2.
-    inversion H3.
-    rewrite H5 in H1.
-    clear m0 m3 H4 H5 H3.
-    inversion_clear H1.
-      inversion_clear H2.
-      inversion_clear H0.
-      inversion H2.
-      rewrite <- H4 in H2.
-      clear H3 m0 w0 H4 w.
-      Check e53c.
-      apply (e53c m2 (BoolVar v1)); try apply evar; try trivial.
-      Check xAss.
- 
-
-    inversion_clear H0.
-    inversion_clear H1.
-    inversion_clear H2.
-    inversion H3.
-    rewrite H5 in H1.
-    clear m0 H4 H5 H3 m3.
-    inversion_clear H1.
-    inversion_clear H2.
-    Check xAss.
-    apply (xAss m2 (BoolVar v1) true v2) in H1.
-    inversion H1.
-    inversion H5.
-    rewrite <- H9 in H5.
-    inversion H5.    
-    Check e53c.
-
-    inversion_clear H0.
-    inversion_clear H1.
-    inversion_clear H0.
-    inversion H1.
-    clear H3 m0.
-    (* trabajando con H2 *)
-    inversion H2.
-    clear m0 m4 H3 H6 H7 i li H0.
-    inversion H8.
-    rewrite H6 in H5.
-    rewrite H6 in H8.
-    clear m0 H3 H6.
-    inversion H5.
-    clear H0 v e H6 H3.
-      inversion H9.
-      clear e m4 H0 H6.
-      inversion H3.
-      clear v m4 H6 H0.
-      Check e53c.
-      apply (e53c m1 (BoolVar v1)).
-        rewrite <- H10 in H7.
-        rewrite H7.
-        apply evar.
-
-        rewrite <- H7.
-        rewrite H12.
-        apply evar.
-
-    inversion_clear H0.
-    inversion_clear H1.
-    inversion_clear H2.
-    inversion H3.
-    rewrite H5 in H1.
-    clear H4 m0 m3 H3 H5.
-    inversion_clear H0.
-    inversion_clear H1.
-    inversion H2.
-    clear H3 m0.
-    inversion H0.
-    clear H1 H5.
-
-    inversion H3.
-    rewrite H5 in H0.
-    clear H4 H3 m0 m3 H5.
-    inversion H1.
-    clear m0 H3.
-    inversion H0.
-    rewrite H6.
-    clear H2 H5 H3 H6.
-    inversion_clear H7.
-    inversion_clear H2.
-    inversion_clear H0.
-    
-    apply (e53c m2 (BoolVar v1)).
-
-
-
-    inversion_clear H0.
-    inversion_clear H1.
-    inversion H0.
-    rewrite <- H5 in H0.
-    rewrite <- H5 in H2.
-    clear H3 H4 m0 m2 H5.
-    inversion_clear H0.
-    clear w0 H3.
-    inversion H6.
-    clear m0 H3.
-    inversion H2.
-    clear i li m0 m3 H0 H3 H7 H8.
-    inversion H9.
-    clear H3 m0.
-    rewrite H7 in H9.
-    rewrite H7 in H5.
-    clear m2 H7.
-    inversion H5.
-    clear H0 H7 H3 e0 m0 v0.
-    inversion H10.
-    clear e0 H0 H7 m0.
-    inversion H3.
-    clear v0 H7 H0 H8.
-    rewrite <- H4.
-    clear H11 m0.
-    
-    apply (e53c m (BoolVar v1)).
-      apply (evar).
-
-    injection.
-    clear m0 H3.
-    inversion_clear H2.
-    inversion H3.
-    rewrite H6 in H0.
-    rewrite H6 in H3.
-    clear H5 H6 m3 m0.
-    inversion H0.
-    rewrite <- H7 in H0.
-    rewrite <- H7 in H3.
-    inversion_clear H0.
-    inversion_clear H9.
-    clear m0 w1 H5.
-    apply (e53c (update m2 v2 false) (BoolVar v1)).
-
-
-    inversion H9.
-    inversion H8.
-    
-
-    inversion_clear H0.
-    inversion_clear H1.
-    inversion H0.
-    rewrite <- H5 in H0.
-    apply (e53c m1 (BoolVar v1)).
-      apply evar.
-
-      Check e53c.
-      inversion H6.
-      inversion H0.
-      inversion H2.
-      inversion H16.`
-      apply (e53c m1 (BoolVar v1)) in H1.
-
-  intros.
-  split.
   inversion_clear H0.
   inversion_clear H1.
-  inversion_clear H0.
-  assert (BEval (BoolVar v1) m1 (lookup m1 v1)).
-  apply (evar v1 m1).
-  inversion_clear H2. (* evar : forall (v : Var) (m : Memoria) *)
+  inversion_clear H2.
+  inversion H3.
+  rewrite H5 in H1.
+  clear m0 H3 H4 H5 m3.
   inversion H0.
-  destruct w.
-
-
-  (*
-   forall (m : Memoria) (e : BoolExpr) (w1 w2 : bool),
-    BEval e m w1 /\ BEval e m w2 -> w1 = w2.
-   *)
-  
+  clear H2 H4 H3 m0 e.
+  rewrite <- H5 in H0.
+  rewrite <- H5 in H1.
+  inversion H6.
+  destruct H4.
+  clear m0 H3.
+  inversion_clear H1.
+  split;
+  [
+    rewrite lookup2;
+    [ rewrite lookup1
+    | assert (v2 = v1 -> False) by (intro; apply H; symmetry; assumption)
+    ]
+  |
+    rewrite lookup1;
+    destruct w;
+    [ inversion H2;
+      assert (BEval (BoolVar v1) (update m v1 true)
+      (beval (update m v1 true) (BoolVar v1))) by constructor;
+      simpl in H7;
+      rewrite lookup1 in H7;
+      apply (e53c (update m v1 true) (BoolVar v1))
+    | ]
+  ]; trivial.
 Qed.
-**)
+
 End Ejercicio7.
