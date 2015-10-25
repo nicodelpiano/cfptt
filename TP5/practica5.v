@@ -567,7 +567,7 @@ Proof.
     trivial.
 Qed.
 
-(* Lemas auxiliares *)
+(* Lemas auxiliares para 7.6 *)
 Lemma lookup1 : forall (m : Memoria) (v : Var) (val : Valor),
   lookup (update m v val) v = val.
 Proof.
@@ -615,7 +615,8 @@ Proof.
   [
     rewrite lookup2;
     [ rewrite lookup1
-    | assert (v2 = v1 -> False) by (intro; apply H; symmetry; assumption)
+    | assert (v2 = v1 -> False)
+      by (intro; apply H; symmetry; assumption)
     ]
   |
     rewrite lookup1;
