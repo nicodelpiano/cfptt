@@ -46,7 +46,7 @@ Proof.
 Qed.
 
 (* 2.2 *)
-Fixpoint inverse (X : Set) (b : bintree X) : bintree X :=
+Function inverse (X : Set) (b : bintree X) {struct b} : bintree X :=
   match b with
     Empty => Empty X
     | (Branch e l r) => Branch X e (inverse X r) (inverse X l)
@@ -55,6 +55,19 @@ Fixpoint inverse (X : Set) (b : bintree X) : bintree X :=
 Hint Constructors mirror.
 
 Lemma MirrorC2: forall (A:Set) (t:bintree A),
+{ t' : bintree A | (mirror A t t')}.
+Proof.
+  intros.
+  functional induction (inverse A t);
+  [ exists (Empty A)
+  | destruct IHb; destruct IHb0;
+    exists (Branch A e x x0);
+    constructor
+  ]; trivial.
+Qed.
+
+(*
+Lemma MirrorC2': forall (A:Set) (t:bintree A),
 { t' : bintree A | (mirror A t t') /\ t' = inverse A t}.
 Proof.
   intros.
@@ -76,6 +89,7 @@ Proof.
       | ]
     | ]; trivial.
 Qed.
+*)
 
 End Ejercicio2.
 
@@ -125,7 +139,48 @@ Fixpoint sbeval (e : BoolExpr) : Value :=
     | bnot e1 => if sbeval e1 then false else true
   end.
 
+Lemma bevalC : forall e:BoolExpr,
+  { b:Value | (BEval e b) -> beval e = b}.
+Proof.
+  intro.
+  destruct (beval e);
+  [  exists true
+  |  exists false
+  ]; trivial.
+Qed.
 
+Lemma sbevalC : forall e:BoolExpr,
+  { b:Value | (BEval e b) -> sbeval e = b}.
+Proof.
+  intro.
+  destruct (sbeval e);
+  [  exists true
+  |  exists false
+  ]; trivial.
+Qed.
+
+(* 3.2 *)
+Hint Constructors BEval.
+
+Lemma bevalC2 : forall e:BoolExpr,
+  { b:Value | (BEval e b) -> beval e = b}.
+Proof.
+  intro.
+  destruct (beval e);
+  [  exists true
+  |  exists false
+  ]; trivial.
+Qed.
+
+Lemma sbevalC2 : forall e:BoolExpr,
+  { b:Value | (BEval e b) -> sbeval e = b}.
+Proof.
+  intro.
+  destruct (sbeval e);
+  [  exists true
+  |  exists false
+  ]; trivial.
+Qed.
 
 End Ejercicio3.
 
@@ -172,7 +227,7 @@ Proof.
 Qed.
 
 Lemma Ej6_4_2: forall l: list,
-  {l2: list | l2 = reverse l -> perm l l2}.
+  { l2: list | l2 = reverse l -> perm l l2 }.
 Proof.
   induction l.
     exists nil.
