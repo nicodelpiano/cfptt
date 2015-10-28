@@ -305,9 +305,23 @@ Fixpoint beval (m : Memoria) (b : BoolExpr) : Valor :=
   match b with
     | BoolVar v => lookup m v
     | Bool b => b
+    | Or e1 e2 =>
+    match beval m e1, beval m e2 with
+      | false, false => false
+      | _, _ => true
+    end
+    | Not e => if beval m e then false else true
+  end.
+
+(**
+Fixpoint beval (m : Memoria) (b : BoolExpr) : Valor :=
+  match b with
+    | BoolVar v => lookup m v
+    | Bool b => b
     | Or e1 e2 => orb (beval m e1) (beval m e2)
     | Not e => negb (beval m e)
   end.
+**)
 
 (* 5.5 *)
 Lemma e55 : forall (m : Memoria) (e : BoolExpr),

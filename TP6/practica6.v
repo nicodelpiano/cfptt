@@ -58,12 +58,16 @@ Lemma MirrorC2: forall (A:Set) (t:bintree A),
 { t' : bintree A | (mirror A t t')}.
 Proof.
   intros.
+  exists (inverse A t).
+  functional induction (inverse A t);
+    constructor; trivial.
+  (*intros.
   functional induction (inverse A t);
   [ exists (Empty A)
   | destruct IHb; destruct IHb0;
     exists (Branch A e x x0);
     constructor
-  ]; trivial.
+  ]; trivial.*)
 Qed.
 
 (*
@@ -141,10 +145,12 @@ Function sbeval (e : BoolExpr) : Value :=
 
 (**
 Lemma sbevalC : forall (e : BoolExpr) (b : Value),
-  sbeval e = b -> { b:Value | (BEval e b) }.
+  { b:Value | (BEval e b) }.
 Proof.
   intros.
+  exists (sbeval e).
   functional induction (sbeval e).
+    
   exists b.
   constructor.
   exists true.
@@ -152,47 +158,152 @@ Proof.
   
 Qed.
 **)
+
 Lemma bevalC : forall e:BoolExpr,
-  { b:Value | (BEval e b) -> beval e = b}.
+  { b:Value | (BEval e b) }.
 Proof.
   intro.
-  destruct (beval e);
-  [  exists true
-  |  exists false
-  ]; trivial.
+  exists (beval e).
+  induction e; simpl.
+    constructor.
+
+    case_eq (beval e1); intro.
+      constructor.
+      rewrite <- H.
+      assumption.
+
+      case_eq (beval e2); intro.
+      apply eorr.
+      rewrite <- H0.
+      assumption.
+
+      constructor.
+      rewrite <- H.
+      assumption.
+
+      rewrite <- H0.
+      assumption.
+
+  case_eq (beval e); intro.
+    constructor.
+    rewrite <- H.
+    assumption.
+
+    constructor.
+    rewrite <- H.
+    assumption.
 Qed.
 
 Lemma sbevalC : forall e:BoolExpr,
-  { b:Value | (BEval e b) -> sbeval e = b}.
+  { b:Value | (BEval e b) }.
 Proof.
   intro.
-  destruct (sbeval e);
-  [  exists true
-  |  exists false
-  ]; trivial.
+  exists (sbeval e).
+  induction e; simpl.
+    constructor.
+
+    case_eq (sbeval e1); intro.
+      constructor.
+      rewrite <- H.
+      assumption.
+
+      case_eq (sbeval e2); intro.
+        apply eorr.
+        rewrite <- H0.
+        assumption.
+
+      constructor.
+      rewrite <- H.
+      assumption.
+      
+      rewrite <- H0.
+      assumption.
+
+  case_eq (sbeval e); intro.
+    constructor.
+    rewrite <- H.
+    assumption.
+
+    constructor.
+    rewrite <- H.
+    assumption.
 Qed.
 
 (* 3.2 *)
 Hint Constructors BEval.
 
 Lemma bevalC2 : forall e:BoolExpr,
-  { b:Value | (BEval e b) -> beval e = b}.
+  { b:Value | (BEval e b) }.
 Proof.
   intro.
-  destruct (beval e);
-  [  exists true
-  |  exists false
-  ]; trivial.
+  exists (beval e).
+  induction e.
+    constructor.
+
+    simpl.
+    case_eq (beval e1); intro.
+      constructor.
+      rewrite <- H.
+      trivial.
+
+      case_eq (beval e2); intro.
+        apply eorr.
+        rewrite <- H0.
+        trivial.
+
+      constructor.
+        rewrite <- H.
+        assumption.
+
+        rewrite <- H0.
+        assumption.
+
+    simpl.
+    case_eq (beval e); intro.
+      constructor.
+      rewrite <- H.
+      assumption.
+
+      constructor.
+      rewrite <- H.
+      assumption.
 Qed.
 
 Lemma sbevalC2 : forall e:BoolExpr,
-  { b:Value | (BEval e b) -> sbeval e = b}.
+  { b:Value | (BEval e b) }.
 Proof.
   intro.
-  destruct (sbeval e);
-  [  exists true
-  |  exists false
-  ]; trivial.
+  exists (sbeval e).
+  induction e.
+    constructor.
+
+    simpl.
+    case_eq (sbeval e1); intro.
+      constructor.
+      rewrite <- H.
+      trivial.
+
+      case_eq (sbeval e2); intro.
+        apply eorr.
+        rewrite <- H0.
+        trivial.
+
+      constructor.
+        rewrite <- H.
+        assumption.
+
+        rewrite <- H0.
+        assumption.
+
+    simpl.
+    case_eq (sbeval e); intro.
+      constructor.
+      rewrite <- H.
+      assumption.
+
+      constructor.
+      rewrite <- H.
+      assumption.
 Qed.
 
 End Ejercicio3.
@@ -227,17 +338,15 @@ Function reverse (l : list) {struct l} : list :=
   end.
 
 (* 4.2 *)
-Lemma Ej6_4: forall l: list, {l2: list | perm l l2}.
+Lemma Ej6_4: forall l: list, { l2: list | perm l l2 }.
 Proof.
   intro.
-  functional induction (reverse l).
-    exists nil.
-    trivial.
-
-    destruct IHl0.
-    exists (append (cons x nil) x0).
-    constructor.
-    trivial.
+  functional induction (reverse l);
+  [ exists nil
+  | destruct IHl0;
+    exists (append (cons x nil) x0);
+    constructor
+  ]; trivial.
 Qed.
 
 Lemma Ej6_4': forall l: list, {l2: list | perm l l2}.
@@ -252,18 +361,22 @@ Proof.
     trivial.
 Qed.
 
-Lemma Ej6_4_2: forall l: list,
-  { l2: list | l2 = reverse l -> perm l l2 }.
-Proof.
-  induction l.
-    exists nil.
-    constructor.
+End Ejercicio4.
 
-    simpl.
-    destruct IHl.
-    exists (append x (cons a nil)).
-    intros.
-    
+Section Ejercicio5.
+
+Definition Le : nat -> nat -> Prop :=
+  fun x y =>
+    x <= y.
+
+Definition Gt : nat -> nat -> Prop :=
+  fun x y =>
+    x > y.
+
+Lemma Le_Gt_dec: forall n m:nat, {(Le n m)}+{(Gt n m)}.
+Proof.
+  intros.
 Qed.
 
-End Ejercicio4.
+
+End Ejercicio5.
