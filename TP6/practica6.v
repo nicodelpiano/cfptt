@@ -117,7 +117,7 @@ Inductive BEval : BoolExpr -> Value -> Prop :=
   | enott : forall e : BoolExpr, BEval e true -> BEval (bnot e) false
   | enotf : forall e : BoolExpr, BEval e false -> BEval (bnot e) true.
 
-Fixpoint beval (e : BoolExpr) : Value :=
+Function beval (e : BoolExpr) : Value :=
   match e with
     | bbool b => b
     | or e1 e2 =>
@@ -128,7 +128,7 @@ Fixpoint beval (e : BoolExpr) : Value :=
     | bnot e1 => if beval e1 then false else true
   end.
 
-Fixpoint sbeval (e : BoolExpr) : Value :=
+Function sbeval (e : BoolExpr) : Value :=
   match e with
     | bbool b => b
     | or e1 e2 =>
@@ -139,6 +139,19 @@ Fixpoint sbeval (e : BoolExpr) : Value :=
     | bnot e1 => if sbeval e1 then false else true
   end.
 
+(**
+Lemma sbevalC : forall (e : BoolExpr) (b : Value),
+  sbeval e = b -> { b:Value | (BEval e b) }.
+Proof.
+  intros.
+  functional induction (sbeval e).
+  exists b.
+  constructor.
+  exists true.
+  constructor.
+  
+Qed.
+**)
 Lemma bevalC : forall e:BoolExpr,
   { b:Value | (BEval e b) -> beval e = b}.
 Proof.
@@ -207,7 +220,7 @@ Inductive perm : list -> list ->Prop:=
 Hint Constructors perm.
 
 (* 4.1 *)
-Fixpoint reverse (l : list) : list :=
+Function reverse (l : list) {struct l} : list :=
   match l with
     | nil => nil
     | cons x xs => append (reverse xs) (cons x nil)
@@ -215,6 +228,19 @@ Fixpoint reverse (l : list) : list :=
 
 (* 4.2 *)
 Lemma Ej6_4: forall l: list, {l2: list | perm l l2}.
+Proof.
+  intro.
+  functional induction (reverse l).
+    exists nil.
+    trivial.
+
+    destruct IHl0.
+    exists (append (cons x nil) x0).
+    constructor.
+    trivial.
+Qed.
+
+Lemma Ej6_4': forall l: list, {l2: list | perm l l2}.
 Proof.
   induction l.
     exists nil.
