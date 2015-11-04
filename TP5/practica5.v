@@ -301,6 +301,7 @@ Inductive BEval : BoolExpr -> Memoria -> Valor -> Prop :=
   .
 
 (* 5.4 *)
+(* eager *)
 Fixpoint beval (m : Memoria) (b : BoolExpr) : Valor :=
   match b with
     | BoolVar v => lookup m v
@@ -314,6 +315,7 @@ Fixpoint beval (m : Memoria) (b : BoolExpr) : Valor :=
   end.
 
 (**
+lazy
 Fixpoint beval (m : Memoria) (b : BoolExpr) : Valor :=
   match b with
     | BoolVar v => lookup m v
@@ -419,8 +421,8 @@ Proof.
   intros.
   apply (eorl e1 e2) in H.
   apply enott in H.
-  assert (false = true).
-  elim (e53c m (Not (Or e1 e2)) false true); trivial.
+  assert (false = true) by
+  (elim (e53c m (Not (Or e1 e2)) false true); trivial).
   discriminate H1.
 Qed.
 
@@ -629,8 +631,8 @@ Proof.
   [
     rewrite lookup2;
     [ rewrite lookup1
-    | assert (v2 = v1 -> False)
-      by (intro; apply H; symmetry; assumption)
+    | assert (v2 = v1 -> False) by
+      (intro; apply H; symmetry; assumption)
     ]
   |
     rewrite lookup1;

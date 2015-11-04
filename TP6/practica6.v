@@ -308,6 +308,10 @@ Qed.
 
 End Ejercicio3.
 
+(* 3.3 *)
+Extract Inductive bool => "Prelude.Bool" [ "Prelude.True" "Prelude.False" ].
+Extraction "BEval" bevalC sbevalC.
+
 Section Ejercicio4.
 
 Variable A:Set.
@@ -349,6 +353,9 @@ Proof.
   ]; trivial.
 Qed.
 
+(* exists reverse l *)
+(* perm_trans *)
+
 Lemma Ej6_4': forall l: list, {l2: list | perm l l2}.
 Proof.
   induction l.
@@ -365,18 +372,161 @@ End Ejercicio4.
 
 Section Ejercicio5.
 
-Definition Le : nat -> nat -> Prop :=
-  fun x y =>
-    x <= y.
+Inductive Le : nat -> nat -> Prop :=
+  LeZero : forall m : nat, Le 0 m
+  | LeS : forall n m : nat, Le n m -> Le (S n) (S m).
 
-Definition Gt : nat -> nat -> Prop :=
+Inductive Le' : nat -> nat -> Prop :=
+  LeZero' : forall n : nat, Le' n n
+  | LeS' : forall n m : nat, Le' n m -> Le' n (S m).
+
+Inductive Gt : nat -> nat -> Prop :=
+  GtZero : forall m : nat, Gt (S m) 0
+  | GtS : forall n m : nat, Gt n m -> Gt (S n) (S m).
+
+Inductive Gt' : nat -> nat -> Prop :=
+  GtZero' : forall n : nat, Gt' n n
+  | GtS' : forall n m, Gt' n m -> Gt' (S n) m.
+
+Function leBool (n m : nat) {struct n} : bool :=
+  match n, m with
+    0, _ => true
+    | S k, 0 => false
+    | S k1, S k2 => leBool k1 k2
+  end.
+
+(**
+Function leBool : nat -> nat -> bool :=
   fun x y =>
-    x > y.
+    match Le x y with
+      | True => true
+      | _ => false
+    end.
+**)
 
 Lemma Le_Gt_dec: forall n m:nat, {(Le n m)}+{(Gt n m)}.
 Proof.
   intros.
+  functional induction (leBool n m).
+    left.
+    apply LeZero.
+
+    right.
+    apply GtZero.
+
+    elim IHb; intro.
+      left.
+      apply LeS.
+      assumption.
+
+      right.
+      apply GtS.
+      assumption.
 Qed.
 
+Require Import Omega.
+
+Lemma le_gt_dec: forall n m:nat, {(le n m)}+{(gt n m)}.
+Proof.
+  intros.
+  functional induction (leBool n m).
+    left.
+    omega.
+
+    right.
+    omega.
+
+    destruct IHb.
+      left.
+      omega.
+
+      right.
+      omega.
+Qed.
 
 End Ejercicio5.
+
+Section Ejercicio6.
+
+Require Import Omega.
+Require Import DecBool.
+Require Import Compare_dec.
+Require Import Plus.
+Require Import Mult.
+Require Import NPeano.
+
+Definition spec_res_nat_div_mod (a b:nat) (qr:nat*nat) :=
+  match qr with
+    (q,r) => (a = b*q + r) /\ r < b
+  end.
+
+Definition ltb n m := leb (S n) m.
+(**
+Lemma aux6 : forall n m : nat,
+  n <= m - 1 -> n < m.
+Proof.
+  intros.
+  induction n.
+    
+Qed.
+**)
+
+Lemma nat_div_mod :
+  forall a b:nat, not(b=0)
+    -> {qr:nat*nat | spec_res_nat_div_mod a b qr}.
+Proof.
+  intros.
+ (*  unfold spec_res_nat_div_mod. *)
+  induction a.
+    exists (0, 0).
+    split.
+      rewrite mult_0_r.
+      rewrite plus_0_r.
+      reflexivity.
+
+      elim (zerop b); [ contradiction | trivial ].
+
+    case_eq b; intros.
+      contradiction.
+
+      destruct IHa.
+      destruct x.
+      simpl in s.
+      destruct s.
+      rewrite H1.
+      case_eq (ltb n1 n); intro.
+        exists (n0, S n1).
+        simpl.
+        split.
+          rewrite H0.
+          simpl.
+          trivial.
+
+          unfold ltb in H3.
+          apply leb_complete in H3.
+          apply le_lt_n_Sm.
+          trivial.
+
+        exists (S n0, 0).
+        simpl.
+        split.
+          rewrite H0.
+          simpl.
+          unfold ltb in H3.
+          apply leb_iff_conv in H3.
+          rewrite H0 in H2.
+          apply lt_le_S in H2.
+          apply lt_le_S in H3.
+          apply le_S_n in H2.
+          apply le_S_n in H3.
+          assert (n = n1) by (apply (le_antisym n n1); trivial).
+          rewrite H4.
+          rewrite mult_succ_r.
+          rewrite plus_0_r.
+          rewrite plus_assoc.
+          trivial.
+
+          apply lt_0_Sn.
+Qed.
+
+End Ejercicio6.
