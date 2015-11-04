@@ -111,22 +111,6 @@ Function sbeval (e : BoolExpr) : Value :=
     | bnot e1 => if sbeval e1 then false else true
   end.
 
-(**
-Lemma sbevalC : forall (e : BoolExpr) (b : Value),
-  { b:Value | (BEval e b) }.
-Proof.
-  intros.
-  exists (sbeval e).
-  functional induction (sbeval e).
-    
-  exists b.
-  constructor.
-  exists true.
-  constructor.
-  
-Qed.
-**)
-
 Lemma bevalC : forall e:BoolExpr,
   { b:Value | (BEval e b) }.
 Proof.
@@ -527,3 +511,40 @@ Qed.
 
 End Ejercicio7.
 
+Section Ejercicio8.
+
+Require Import Inverse_Image.
+Require Import Wf_nat.
+
+(**
+Inductive BoolExpr : Set :=
+  | bbool : bool -> BoolExpr
+  | or : BoolExpr -> BoolExpr -> BoolExpr
+  | bnot : BoolExpr -> BoolExpr.
+**)
+
+(* 8.1 *)
+Function size (e : BoolExpr) : nat :=
+  match e with
+    | bbool b => 1
+    | or e1 e2 => size e1 + size e2
+    | bnot e => size e
+  end.
+
+Definition elt (e1 e2 : BoolExpr) := size e1 < size e2.
+
+(* 8.2 *)
+Theorem well_founded_elt : forall A:Set,
+  well_founded elt.
+Proof.
+  unfold well_founded.
+  intros.
+  induction a;
+  constructor;
+  intros;
+  inversion H;
+  apply Acc_inverse_image;
+  apply lt_wf.
+Qed.
+
+End Ejercicio8.
