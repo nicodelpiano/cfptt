@@ -61,39 +61,7 @@ Proof.
   exists (inverse A t).
   functional induction (inverse A t);
     constructor; trivial.
-  (*intros.
-  functional induction (inverse A t);
-  [ exists (Empty A)
-  | destruct IHb; destruct IHb0;
-    exists (Branch A e x x0);
-    constructor
-  ]; trivial.*)
 Qed.
-
-(*
-Lemma MirrorC2': forall (A:Set) (t:bintree A),
-{ t' : bintree A | (mirror A t t') /\ t' = inverse A t}.
-Proof.
-  intros.
-  induction t.
-    simpl.
-    exists (Empty A).
-    split; trivial.
-
-    simpl.
-    destruct IHt1.
-    destruct IHt2.
-    exists (Branch A x (inverse A t2) (inverse A t1)).
-    split;
-    [ destruct a;
-      destruct a0;
-      constructor;
-      [ rewrite H0 in H
-      | rewrite H2 in H1
-      | ]
-    | ]; trivial.
-Qed.
-*)
 
 End Ejercicio2.
 
@@ -530,3 +498,32 @@ Proof.
 Qed.
 
 End Ejercicio6.
+
+Extraction "nat_div_mod" nat_div_mod.
+
+Section Ejercicio7.
+
+Inductive tree (A:Set) : Set :=
+  | leaf : tree A
+  | node : A -> tree A -> tree A -> tree A.
+
+Inductive tree_sub (A:Set) (t:tree A) : tree A -> Prop :=
+  | tree_sub1 : forall (t':tree A) (x:A),
+    tree_sub A t (node A x t t')
+  | tree_sub2 : forall (t':tree A) (x:A),
+    tree_sub A t (node A x t' t).
+
+Theorem well_founded_tree_sub : forall A:Set,
+  well_founded (tree_sub A).
+Proof.
+  unfold well_founded.
+  intros.
+  induction a;
+  constructor;
+  intros;
+  inversion H;
+  trivial.
+Qed.
+
+End Ejercicio7.
+
