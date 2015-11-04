@@ -3,8 +3,8 @@ Extraction Language Haskell.
 Section Ejercicio1.
 
 (* 1.1 *)
-Lemma predspec : forall n : nat,
-  {m : nat | n = 0 /\ m = 0 \/ n = S m}.
+Lemma predspec : forall n: nat,
+  { m: nat | n = 0 /\ m = 0 \/ n = S m }.
 Proof.
   intro.
   destruct n;
@@ -20,19 +20,19 @@ Extraction "predecesor" predspec.
 
 Section Ejercicio2.
 
-Inductive bintree (X:Set) :=
+Inductive bintree (X: Set) :=
   Empty : bintree X
   | Branch : X -> bintree X -> bintree X -> bintree X.
 
-Inductive mirror (X:Set) : bintree X -> bintree X -> Prop :=
+Inductive mirror (X: Set) : bintree X -> bintree X -> Prop :=
   mirror_empty : mirror X (Empty X) (Empty X)
   | mirror_branch : forall (t11 t12 t21 t22 : bintree X) (x1 x2 : X),
     mirror X t11 t22 -> mirror X t12 t21 ->
       x1 = x2 -> mirror X (Branch X x1 t11 t12) (Branch X x2 t21 t22).
 
 (* 2.1 *)
-Lemma MirrorC: forall (A:Set) (t:bintree A),
-{t':bintree A|(mirror A t t')}.
+Lemma MirrorC: forall (A: Set) (t: bintree A),
+  { t': bintree A | (mirror A t t') }.
 Proof.
   intros.
   induction t.
@@ -46,7 +46,7 @@ Proof.
 Qed.
 
 (* 2.2 *)
-Function inverse (X : Set) (b : bintree X) {struct b} : bintree X :=
+Function inverse (X: Set) (b: bintree X) {struct b}: bintree X :=
   match b with
     Empty => Empty X
     | (Branch e l r) => Branch X e (inverse X r) (inverse X l)
@@ -54,8 +54,8 @@ Function inverse (X : Set) (b : bintree X) {struct b} : bintree X :=
 
 Hint Constructors mirror.
 
-Lemma MirrorC2: forall (A:Set) (t:bintree A),
-{ t' : bintree A | (mirror A t t')}.
+Lemma MirrorC2: forall (A: Set) (t: bintree A),
+{ t' : bintree A | (mirror A t t') }.
 Proof.
   intros.
   exists (inverse A t).
@@ -73,23 +73,23 @@ Section Ejercicio3.
 (* 3.1 *)
 Definition Value := bool.
 
-Inductive BoolExpr : Set :=
-  | bbool : bool -> BoolExpr
-  | or : BoolExpr -> BoolExpr -> BoolExpr
-  | bnot : BoolExpr -> BoolExpr.
+Inductive BoolExpr: Set :=
+  | bbool: bool -> BoolExpr
+  | or: BoolExpr -> BoolExpr -> BoolExpr
+  | bnot: BoolExpr -> BoolExpr.
 
-Inductive BEval : BoolExpr -> Value -> Prop :=
-  | ebool : forall b : bool, BEval (bbool b) (b:Value)
-  | eorl : forall e1 e2 : BoolExpr,
+Inductive BEval: BoolExpr -> Value -> Prop :=
+  | ebool: forall b: bool, BEval (bbool b) (b: Value)
+  | eorl: forall e1 e2: BoolExpr,
     BEval e1 true -> BEval (or e1 e2) true
-  | eorr : forall e1 e2 : BoolExpr,
+  | eorr: forall e1 e2: BoolExpr,
     BEval e2 true -> BEval (or e1 e2) true
-  | eorrl : forall e1 e2 : BoolExpr,
+  | eorrl: forall e1 e2: BoolExpr,
     BEval e1 false -> BEval e2 false -> BEval (or e1 e2) false
-  | enott : forall e : BoolExpr, BEval e true -> BEval (bnot e) false
-  | enotf : forall e : BoolExpr, BEval e false -> BEval (bnot e) true.
+  | enott: forall e: BoolExpr, BEval e true -> BEval (bnot e) false
+  | enotf: forall e: BoolExpr, BEval e false -> BEval (bnot e) true.
 
-Function beval (e : BoolExpr) : Value :=
+Function beval (e : BoolExpr): Value :=
   match e with
     | bbool b => b
     | or e1 e2 =>
@@ -100,7 +100,7 @@ Function beval (e : BoolExpr) : Value :=
     | bnot e1 => if beval e1 then false else true
   end.
 
-Function sbeval (e : BoolExpr) : Value :=
+Function sbeval (e : BoolExpr): Value :=
   match e with
     | bbool b => b
     | or e1 e2 =>
@@ -111,7 +111,7 @@ Function sbeval (e : BoolExpr) : Value :=
     | bnot e1 => if sbeval e1 then false else true
   end.
 
-Lemma bevalC : forall e:BoolExpr,
+Lemma bevalC: forall e: BoolExpr,
   { b:Value | (BEval e b) }.
 Proof.
   intro.
@@ -146,7 +146,7 @@ Proof.
     assumption.
 Qed.
 
-Lemma sbevalC : forall e:BoolExpr,
+Lemma sbevalC: forall e: BoolExpr,
   { b:Value | (BEval e b) }.
 Proof.
   intro.
@@ -184,7 +184,7 @@ Qed.
 (* 3.2 *)
 Hint Constructors BEval.
 
-Lemma bevalC2 : forall e:BoolExpr,
+Lemma bevalC2: forall e: BoolExpr,
   { b:Value | (BEval e b) }.
 Proof.
   intro.
@@ -221,7 +221,7 @@ Proof.
       assumption.
 Qed.
 
-Lemma sbevalC2 : forall e:BoolExpr,
+Lemma sbevalC2: forall e: BoolExpr,
   { b:Value | (BEval e b) }.
 Proof.
   intro.
@@ -266,28 +266,31 @@ Extraction "BEval" bevalC sbevalC.
 
 Section Ejercicio4.
 
-Variable A:Set.
+Variable A: Set.
 
-Inductive list : Set :=
-  | nil : list
-  | cons : A -> list -> list.
+Inductive list: Set :=
+  | nil: list
+  | cons: A -> list -> list.
 
-Fixpoint append (l1 l2 : list) {struct l1} : list :=
+Fixpoint append (l1 l2 : list) {struct l1}: list :=
   match l1 with
     | nil => l2
     | cons a l => cons a (append l l2)
   end.
 
-Inductive perm : list -> list ->Prop:=
+Inductive perm: list -> list -> Prop :=
   | perm_refl: forall l, perm l l
-  | perm_cons: forall a l0 l1, perm l0 l1-> perm (cons a l0)(cons a l1)
-  | perm_app: forall a l, perm (cons a l) (append l (cons a nil))
-  | perm_trans: forall l1 l2 l3, perm l1 l2 -> perm l2 l3 -> perm l1 l3.
+  | perm_cons: forall a l0 l1,
+    perm l0 l1-> perm (cons a l0)(cons a l1)
+  | perm_app: forall a l,
+    perm (cons a l) (append l (cons a nil))
+  | perm_trans: forall l1 l2 l3,
+    perm l1 l2 -> perm l2 l3 -> perm l1 l3.
 
 Hint Constructors perm.
 
 (* 4.1 *)
-Function reverse (l : list) {struct l} : list :=
+Function reverse (l: list) {struct l}: list :=
   match l with
     | nil => nil
     | cons x xs => append (reverse xs) (cons x nil)
@@ -308,7 +311,7 @@ Qed.
 (* exists reverse l *)
 (* perm_trans *)
 
-Lemma Ej6_4': forall l: list, {l2: list | perm l l2}.
+Lemma Ej6_4': forall l: list, { l2: list | perm l l2 }.
 Proof.
   induction l.
     exists nil.
@@ -324,23 +327,23 @@ End Ejercicio4.
 
 Section Ejercicio5.
 
-Inductive Le : nat -> nat -> Prop :=
-  LeZero : forall m : nat, Le 0 m
-  | LeS : forall n m : nat, Le n m -> Le (S n) (S m).
+Inductive Le: nat -> nat -> Prop :=
+  LeZero: forall m: nat, Le 0 m
+  | LeS: forall n m: nat, Le n m -> Le (S n) (S m).
 
-Inductive Le' : nat -> nat -> Prop :=
-  LeZero' : forall n : nat, Le' n n
-  | LeS' : forall n m : nat, Le' n m -> Le' n (S m).
+Inductive Le': nat -> nat -> Prop :=
+  LeZero': forall n: nat, Le' n n
+  | LeS': forall n m: nat, Le' n m -> Le' n (S m).
 
-Inductive Gt : nat -> nat -> Prop :=
-  GtZero : forall m : nat, Gt (S m) 0
-  | GtS : forall n m : nat, Gt n m -> Gt (S n) (S m).
+Inductive Gt: nat -> nat -> Prop :=
+  GtZero: forall m: nat, Gt (S m) 0
+  | GtS: forall n m: nat, Gt n m -> Gt (S n) (S m).
 
-Inductive Gt' : nat -> nat -> Prop :=
-  GtZero' : forall n : nat, Gt' n n
-  | GtS' : forall n m, Gt' n m -> Gt' (S n) m.
+Inductive Gt': nat -> nat -> Prop :=
+  GtZero': forall n: nat, Gt' n n
+  | GtS': forall n m: nat, Gt' n m -> Gt' (S n) m.
 
-Function leBool (n m : nat) {struct n} : bool :=
+Function leBool (n m: nat) {struct n}: bool :=
   match n, m with
     0, _ => true
     | S k, 0 => false
@@ -356,7 +359,8 @@ Function leBool : nat -> nat -> bool :=
     end.
 **)
 
-Lemma Le_Gt_dec: forall n m:nat, {(Le n m)}+{(Gt n m)}.
+Lemma Le_Gt_dec: forall n m: nat,
+  { (Le n m) } + { (Gt n m) }.
 Proof.
   intros.
   functional induction (leBool n m).
@@ -378,7 +382,8 @@ Qed.
 
 Require Import Omega.
 
-Lemma le_gt_dec: forall n m:nat, {(le n m)}+{(gt n m)}.
+Lemma le_gt_dec: forall n m: nat,
+  { (le n m) } + { (gt n m) }.
 Proof.
   intros.
   functional induction (leBool n m).
@@ -407,28 +412,18 @@ Require Import Plus.
 Require Import Mult.
 Require Import NPeano.
 
-Definition spec_res_nat_div_mod (a b:nat) (qr:nat*nat) :=
+Definition spec_res_nat_div_mod (a b: nat) (qr: nat*nat) :=
   match qr with
     (q,r) => (a = b*q + r) /\ r < b
   end.
 
 Definition ltb n m := leb (S n) m.
-(**
-Lemma aux6 : forall n m : nat,
-  n <= m - 1 -> n < m.
-Proof.
-  intros.
-  induction n.
-    
-Qed.
-**)
 
 Lemma nat_div_mod :
-  forall a b:nat, not(b=0)
-    -> {qr:nat*nat | spec_res_nat_div_mod a b qr}.
+  forall a b: nat, not (b = 0)
+    -> { qr: nat*nat | spec_res_nat_div_mod a b qr }.
 Proof.
   intros.
- (*  unfold spec_res_nat_div_mod. *)
   induction a.
     exists (0, 0).
     split.
@@ -487,17 +482,17 @@ Extraction "nat_div_mod" nat_div_mod.
 
 Section Ejercicio7.
 
-Inductive tree (A:Set) : Set :=
-  | leaf : tree A
-  | node : A -> tree A -> tree A -> tree A.
+Inductive tree (A: Set): Set :=
+  | leaf: tree A
+  | node: A -> tree A -> tree A -> tree A.
 
-Inductive tree_sub (A:Set) (t:tree A) : tree A -> Prop :=
-  | tree_sub1 : forall (t':tree A) (x:A),
+Inductive tree_sub (A: Set) (t: tree A) :tree A -> Prop :=
+  | tree_sub1: forall (t': tree A) (x: A),
     tree_sub A t (node A x t t')
-  | tree_sub2 : forall (t':tree A) (x:A),
+  | tree_sub2: forall (t': tree A) (x: A),
     tree_sub A t (node A x t' t).
 
-Theorem well_founded_tree_sub : forall A:Set,
+Theorem well_founded_tree_sub: forall A: Set,
   well_founded (tree_sub A).
 Proof.
   unfold well_founded.
@@ -524,17 +519,17 @@ Inductive BoolExpr : Set :=
 **)
 
 (* 8.1 *)
-Function size (e : BoolExpr) : nat :=
+Function size (e: BoolExpr): nat :=
   match e with
     | bbool b => 1
-    | or e1 e2 => size e1 + size e2
-    | bnot e => size e
+    | or e1 e2 => 1 + size e1 + size e2
+    | bnot e => 1 + size e
   end.
 
-Definition elt (e1 e2 : BoolExpr) := size e1 < size e2.
+Definition elt (e1 e2: BoolExpr) := size e1 < size e2.
 
 (* 8.2 *)
-Theorem well_founded_elt : forall A:Set,
+Theorem well_founded_elt: forall A: Set,
   well_founded elt.
 Proof.
   unfold well_founded.
