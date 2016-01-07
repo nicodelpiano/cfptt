@@ -3,13 +3,10 @@
  * 
  ******************************************************************)
 
-Require Export Maps.
+Require Import Maps.
+Open Scope maps_scope.
 
 Section State.
-
-Definition partial (A B : Set) := A -> option B.
-
-Infix "|->" := partial (at level 62, left associativity).
 
 (** Identificadores de OSs e Hypercalls *)
 
@@ -98,10 +95,11 @@ Inductive page_owner : Set :=
 .
 
 Record page : Set :=
-  {
-    page_content : content;
-    page_owned_by : page_owner
-  }
+  Page
+    {
+      page_content : content;
+      page_owned_by : page_owner
+    }
 .
 
 Definition hypervisor_map := os_ident |-> (padd |-> madd).
@@ -110,16 +108,17 @@ Definition system_memory := madd |-> page.
 
 (* States *)
 
-Record State :=
-  {
-    active_os : os_ident; (* which is the active operating system *)
-    aos_exec_mode : exec_mode; (* corresponding execution mode *)
-    aos_activity : os_activity; (* corresponding processor mode *)
-    oss : oss_map; (* stores the information of the guest operating systems of the
+Record state : Set :=
+  State
+    {
+      active_os : os_ident; (* which is the active operating system *)
+      aos_exec_mode : exec_mode; (* corresponding execution mode *)
+      aos_activity : os_activity; (* corresponding processor mode *)
+      oss : oss_map; (* stores the information of the guest operating systems of the
 platform *)
-    hypervisor : hypervisor_map; (* formalizes the memory model *)
-    memory : system_memory (* formalizes the memory model *)
-  }
+      hypervisor : hypervisor_map; (* formalizes the memory model *)
+      memory : system_memory (* formalizes the memory model *)
+    }
 .
 
 End State.
