@@ -7,13 +7,16 @@ Require Export Maps.
 
 Section State.
 
+Definition partial (A B : Set) := A -> option B.
+
+Infix "|->" := partial (at level 62, left associativity).
+
 (** Identificadores de OSs e Hypercalls *)
 
 Parameter os_ident : Set.
 Parameter os_ident_eq : forall oi1 oi2 : os_ident, {oi1 = oi2} + {oi1 <> oi2}.
 
 Parameter Hyperv_call: Set.
-
 
 (* Memoria y direcciones *)
 
@@ -66,7 +69,7 @@ Record os : Set :=
     }
 .
 
-Definition oss_map := os_ident -> option os.
+Definition oss_map := os_ident |-> os.
 
 (* Execution modes *)
 Inductive exec_mode : Set :=
@@ -84,7 +87,7 @@ Inductive os_activity : Set :=
 (* Page *)
 Inductive content : Set :=
   | RW : option value -> content
-  | PT : (vadd -> option madd) -> content
+  | PT : (vadd |-> madd) -> content
   | Other : content
 .
 
@@ -101,9 +104,9 @@ Record page : Set :=
   }
 .
 
-Definition hypervisor_map := os_ident -> option (padd -> option madd).
+Definition hypervisor_map := os_ident |-> (padd |-> madd).
 
-Definition system_memory := madd -> option page.
+Definition system_memory := madd |-> page.
 
 (* States *)
 
