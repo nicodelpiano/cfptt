@@ -21,13 +21,13 @@ Parameter Hyperv_call: Set.
 Parameter vadd: Set.
 Parameter vadd_eq : forall va1 va2 : vadd, {va1 = va2} + {va1 <> va2}.
 
-(** Direcciones de M·quina. *)
+(** Direcciones de M√°quina. *)
 Parameter madd :  Set.
 Parameter madd_eq : forall ma1 ma2 : madd, {ma1 = ma2} + {ma1 <> ma2}.
 
-(** Direcciones FÌsicas : 
+(** Direcciones F√≠sicas : 
 Los sitemas operativos utilizan este tipo de direcciones para ver regiones de memoriea
-contigua. Estos no ven direcciones de m·quina. *)
+contigua. Estos no ven direcciones de m√°quina. *)
 Parameter padd: Set.
 Parameter padd_eq : forall pa1 pa2 : padd, {pa1 = pa2} + {pa1 <> pa2}.
 
@@ -39,11 +39,84 @@ Parameter value_eq:forall val1 val2 : value, {val1 = val2} + {val1 <> val2}.
 (* Environment *)
 Record context : Set :=
   Context
-    {(** una direcciÛn virtual es accesible, i.e. no est· reserveda 
+    {(** una direcci√≥n virtual es accesible, i.e. no est√° reserveda 
          por el Hypervisor *)
        ctxt_vadd_accessible: vadd -> bool;
      (** guest Oss (Confiable/No Confiable) **)
        ctxt_oss : os_ident -> bool
     }.
+
+(* Ejercicio 1 *)
+
+(*
+Inductive option (T : Type) : Type :=
+  | Some : T -> option T
+  | None : option T
+.
+*)
+
+(** Formalizing States *)
+
+(* Operating systems *)
+Record os : Set :=
+  Os
+    {
+      curr_page : padd;
+      hcall : option Hyperv_call
+    }
+.
+
+Definition oss_map := os_ident -> option os.
+
+(* Execution modes *)
+Inductive exec_mode : Set :=
+  | usr : exec_mode
+  | svc : exec_mode
+.
+
+Inductive os_activity : Set :=
+  | running : os_activity
+  | waiting : os_activity
+.
+
+(* Memory mappings *)
+
+(* Page *)
+Inductive content : Set :=
+  | RW : option value -> content
+  | PT : (vadd -> option madd) -> content
+  | Other : content
+.
+
+Inductive page_owner : Set :=
+  | Hyp : page_owner
+  | Osi : os_ident -> page_owner
+  | No_Owner : page_owner
+.
+
+Record page : Set :=
+  {
+    page_content : content;
+    page_owned_by : page_owner
+  }
+.
+
+Definition hypervisor_map := os_ident -> option (padd -> option madd).
+
+Definition system_memory := madd -> option page.
+
+(* States *)
+
+Record State :=
+  {
+    active_os : os_ident; (* which is the active operating system *)
+    aos_exec_mode : exec_mode; (* corresponding execution mode *)
+    aos_activity : os_activity; (* corresponding processor mode *)
+    oss : oss_map; (* stores the information of the guest operating systems of the
+platform *)
+    hypervisor : hypervisor_map; (* formalizes the memory model *)
+    memory : system_memory (* formalizes the memory model *)
+  }
+.
 
 End State.

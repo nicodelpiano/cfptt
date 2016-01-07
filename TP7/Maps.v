@@ -6,7 +6,7 @@ Set Implicit Arguments.
 
 Section Exc_Type.
 
-(* El tipo que representa al codominio de una función parcial. *)
+(* El tipo que representa al codominio de una funciÃ³n parcial. *)
 Inductive exc (V E : Set) : Set :=
   | Value : V -> exc V E
   | Error : E -> exc V E.
@@ -23,7 +23,7 @@ Definition is_Value (e : exc V1 E1) : Prop :=
 End Exc_Type.
 
 
-(* Descripción sencilla de los mappings, utilizando listas. *)
+(* DescripciÃ³n sencilla de los mappings, utilizando listas. *)
 
 Notation "'If' c1 'then' c2 'else' c3" :=
   match c1 with
@@ -33,25 +33,25 @@ Notation "'If' c1 'then' c2 'else' c3" :=
 
 Section Mapping_Definition.
 
-(* El tipo de los índices para acceder a una entrada de un map *)
+(* El tipo de los Ã­ndices para acceder a una entrada de un map *)
 Variable index : Set.
 Variable index_eq : forall x y : index, {x = y} + {x <> y}.
 
-(* El tipo de la información asociada a cada índice *)
+(* El tipo de la informaciÃ³n asociada a cada Ã­ndice *)
 Variable info : Set.
 
 Record item : Set := 
  Item
-    (* índice*)
+    (* Ã­ndice*)
     {item_index : index;
-    (* información asociada al índice *)
+    (* informaciÃ³n asociada al Ã­ndice *)
     item_info : info 
    }.
 
 (* Mappings como listas *)
 Definition mapping : Set := list item.
 
-(* Map vacío  *)
+(* Map vacÃ­o  *)
 Definition map_empty : mapping := nil.
 
 
@@ -71,8 +71,8 @@ Fixpoint map_add (mp : mapping) (idx : index)
   end.
 
 (* Map apply *)
-(* Aplicación de un map a un índice para obtener la información asociada 
-a dicho índice *)
+(* AplicaciÃ³n de un map a un Ã­ndice para obtener la informaciÃ³n asociada 
+a dicho Ã­ndice *)
 
 Fixpoint map_apply (mp : mapping) 
   (idx : index) : exc info index :=
@@ -111,7 +111,7 @@ Fixpoint map_valid_index_fix (mp:mapping) (idx:index) : bool :=
         map_valid_index_fix mp' idx
   end.
 
-(* Tamaño de un Map *)
+(* TamaÃ±o de un Map *)
 Definition map_size (mp : mapping) : nat := length mp.
 
 End Mapping_Definition.
