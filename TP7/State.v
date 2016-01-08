@@ -48,13 +48,6 @@ Record context : Set :=
 
 (* Ejercicio 1 *)
 
-(*
-Inductive option (T : Type) : Type :=
-  | Some : T -> option T
-  | None : option T
-.
-*)
-
 (** Formalizing States *)
 
 (* Operating systems *)
