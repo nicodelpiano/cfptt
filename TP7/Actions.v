@@ -110,7 +110,7 @@ Definition Post (s : state) (a : action) (s' : state) :=
   if the hypervisor or a trusted OS is running the
   processor must be in supervisor mode
 *)
-Definition condicion3 (s : state) : Prop :=
+Definition condicionIII (s : state) : Prop :=
   ((aos_activity s = running /\ (ctxt_oss ctxt) (active_os s) = true)
   \/ aos_activity s = waiting) (* esto es para decir que el hypervisor esta corriendo *)
     -> aos_exec_mode s = svc
@@ -120,7 +120,7 @@ Definition condicion3 (s : state) : Prop :=
   the hypervisor maps an OS physical address to a machine address owned by
   that same OS. This mapping is also injective
 *)
-Definition condicion5 (s : state) : Prop :=
+Definition condicionV (s : state) : Prop :=
   forall (osi : os_ident) (pa : padd),
     ((hypervisor s) osi >>= (fun hso : padd |-> madd =>
       hso pa >>= (fun ma : madd =>
@@ -138,7 +138,7 @@ Definition condicion5 (s : state) : Prop :=
   map accessible virtual addresses to pages owned by o and not accessible ones to
   pages owned by the hypervisor
 *)
-Definition condicion6 (s : state) : Prop :=
+Definition condicionVI (s : state) : Prop :=
   forall (osi : os_ident),
     (oss s) osi >>= (fun actual_os : os =>
       (hypervisor s) osi >>= (fun hso : padd |-> madd =>
@@ -153,7 +153,7 @@ Definition condicion6 (s : state) : Prop :=
 .
 
 Definition valid_state (s : state) : Prop :=
-  condicion3 s /\ condicion5 s /\ condicion6 s
+  condicionIII s /\ condicionV s /\ condicionVI s
 .
 
 (* Ejercicio 4 *)
@@ -163,8 +163,7 @@ Inductive one_step_exec (s : state) (a : action) (s' : state) : Prop :=
 .
 
 (* Ejercicio 6 *)
-
-Lemma PreservaIII : forall (s s' : state) (a : action), one_step_exec s a s' -> condicion3 s'.
+Lemma PreservaIII' : forall (s s' : state) (a : action), one_step_exec s a s' -> condicionIII s'.
 Proof.
   destruct a; intro.
     inversion H.
@@ -177,7 +176,7 @@ Proof.
     inversion H0.
     inversion H2.
     inversion H1.
-    unfold condicion3.
+    unfold condicionIII.
     intro.
     destruct H5 as [_ [_ [AOSE [AOSA [_ [AOS _]]]]]].
     elim H3.
@@ -197,23 +196,58 @@ Proof.
     inversion H0.
     inversion H2.
       inversion H1.
-      unfold condicion3.
+      unfold condicionIII.
       intro.
       destruct H5 as [_ [AOSE _]].
       trivial.
 
-      unfold condicion3.
+      inversion H1.
+      unfold condicionIII.
       intro.
-      elim H6; intro.
-        destruct H7 as [_ CO'].
+      elim H8; intro.
+        destruct H9 as [_ CO'].
         destruct H5 as [CO [_ [_ [_ [_ [AOS _]]]]]].
         rewrite AOS in CO'.
         rewrite CO in CO'.
         discriminate.
 
         destruct H5 as [_ [_ [AOSA _]]].
-        rewrite AOSA in H7.
+        rewrite AOSA in H9.
         discriminate.
+Qed.
+
+Lemma PreservaIII : forall (s s' : state) (a : action), one_step_exec s a s' -> condicionIII s'.
+Proof.
+  destruct a; intro; inversion H; inversion H0; inversion H1;
+  [ inversion H2;
+    rewrite <- H7;
+    trivial
+  |
+    inversion H2;
+    unfold condicionIII;
+    intro;
+    destruct H7 as [_ [_ [AOSE [AOSA [_ [AOS _]]]]]];
+    elim H3;
+    [ | elim H8; rewrite <- AOSA;
+      [ left; rewrite <- AOS | right ]
+    ]; trivial
+   |
+    inversion H2; unfold condicionIII; intro; destruct H7 as [CO [AOSE [AOSA [_ [_ [AOS _]]]]]];
+    [ trivial
+      | elim H8; intro;
+      [ destruct H7 as [_ CO']; rewrite AOS in CO'; rewrite CO in CO'
+        | rewrite AOSA in H7
+        ]; discriminate
+    ]
+  ].
+Qed.
+
+Lemma Read_Isolation : forall (s s' : state) (va : vadd),
+  one_step_exec s (read va) s' ->
+    exists (ma : madd), va_mapped_to_ma s va ma /\
+      (exists (pg : page), (memory s) ma >>= (fun pg' : page => pg = pg') /\ page_owned_by pg = Osi (active_os s)).
+Proof.
+
 Qed.
 
 End Actions.
