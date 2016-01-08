@@ -36,6 +36,13 @@ Definition va_mapped_to_ma (s : state) (va : vadd) (ma : madd) : Prop :=
   ))))
 .
 
+(* Definition isRW (pc : content) : Prop :=
+  match pc with
+    | RW _ => True
+    | _ => False
+  end
+. *)
+
 Definition isRW (s : state) (ma : madd) : Prop :=
   (memory s) ma >>= (fun mp : page =>
     exists ov : option value, page_content mp = RW ov
@@ -97,8 +104,116 @@ Definition Post (s : state) (a : action) (s' : state) :=
   end
 .
         
+(* Ejercicio 5 *)
 
+(*
+  if the hypervisor or a trusted OS is running the
+  processor must be in supervisor mode
+*)
+Definition condicion3 (s : state) : Prop :=
+  ((aos_activity s = running /\ (ctxt_oss ctxt) (active_os s) = true)
+  \/ aos_activity s = waiting) (* esto es para decir que el hypervisor esta corriendo *)
+    -> aos_exec_mode s = svc
+.
 
+(*
+  the hypervisor maps an OS physical address to a machine address owned by
+  that same OS. This mapping is also injective
+*)
+Definition condicion5 (s : state) : Prop :=
+  forall (osi : os_ident) (pa : padd),
+    ((hypervisor s) osi >>= (fun hso : padd |-> madd =>
+      hso pa >>= (fun ma : madd =>
+        (memory s) ma >>= (fun mp : page =>
+          page_owned_by mp = Osi osi
+    ))))
+    /\
+    forall (pa2 : padd),
+      (hypervisor s) osi >>= (fun hso : padd |-> madd =>
+        ~ (hso pa = None madd) /\ hso pa = hso pa2 -> pa = pa2)
+.
 
+(*
+  all page tables of an OS o
+  map accessible virtual addresses to pages owned by o and not accessible ones to
+  pages owned by the hypervisor
+*)
+Definition condicion6 (s : state) : Prop :=
+  forall (osi : os_ident),
+    (oss s) osi >>= (fun actual_os : os =>
+      (hypervisor s) osi >>= (fun hso : padd |-> madd =>
+        hso (curr_page actual_os) >>= (fun ma : madd =>
+          (memory s) ma >>= (fun mp : page =>
+            exists va_to_ma : vadd |-> madd, page_content mp = PT va_to_ma
+            /\ forall va : vadd, va_to_ma va >>= (fun ma' : madd =>
+                 (memory s) ma' >>= (fun mp' : page =>
+                   (ctxt_vadd_accessible ctxt va = true -> page_owned_by mp' = Osi osi)
+                   /\ (ctxt_vadd_accessible ctxt va = false -> page_owned_by mp' = Hyp)
+    ))))))
+.
+
+Definition valid_state (s : state) : Prop :=
+  condicion3 s /\ condicion5 s /\ condicion6 s
+.
+
+(* Ejercicio 4 *)
+
+Inductive one_step_exec (s : state) (a : action) (s' : state) : Prop :=
+  | ose : valid_state s -> Pre s a -> Post s a s' -> one_step_exec s a s'
+.
+
+(* Ejercicio 6 *)
+
+Lemma PreservaIII : forall (s s' : state) (a : action), one_step_exec s a s' -> condicion3 s'.
+Proof.
+  destruct a; intro.
+    inversion H.
+    inversion H0.
+    inversion H2.
+    rewrite <- H5.
+    trivial.
+
+    inversion H.
+    inversion H0.
+    inversion H2.
+    inversion H1.
+    unfold condicion3.
+    intro.
+    destruct H5 as [_ [_ [AOSE [AOSA [_ [AOS _]]]]]].
+    elim H3.
+      trivial.
+
+      elim H8; intro.
+        left.
+        rewrite <- AOSA.
+        rewrite <- AOS.
+        trivial.
+
+        right.
+        rewrite <- AOSA.
+        trivial.
+
+    inversion H.
+    inversion H0.
+    inversion H2.
+      inversion H1.
+      unfold condicion3.
+      intro.
+      destruct H5 as [_ [AOSE _]].
+      trivial.
+
+      unfold condicion3.
+      intro.
+      elim H6; intro.
+        destruct H7 as [_ CO'].
+        destruct H5 as [CO [_ [_ [_ [_ [AOS _]]]]]].
+        rewrite AOS in CO'.
+        rewrite CO in CO'.
+        discriminate.
+
+        destruct H5 as [_ [_ [AOSA _]]].
+        rewrite AOSA in H7.
+        discriminate.
+Qed.
 
 End Actions.
