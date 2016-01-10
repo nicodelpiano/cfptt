@@ -273,104 +273,17 @@ Proof.
                   destruct H8.
                   exact (H8 CT).
 
-                  
+                  rewrite H10 in H8; trivial.
 
-                  
+            rewrite H6 in H5; contradiction.
 
+          rewrite H3 in VtoM; contradiction.
 
-Qed.
+        rewrite H2 in VtoM; contradiction.
 
+      rewrite H1 in VtoM; contradiction.
 
-
-Lemma Read_Isolation' : forall (s s' : state) (va : vadd),
-  one_step_exec s (read va) s' ->
-    exists (ma : madd), va_mapped_to_ma s va ma /\
-      (exists (pg : page), (memory s) ma >>= (fun pg' : page => pg = pg') /\ page_owned_by pg = Osi (active_os s)).
-Proof.
-  intros.
-  inversion_clear H.
-  inversion_clear H0.
-  inversion_clear H3.
-  unfold condicionIII in H.
-  unfold condicionVI in H4.
-  unfold condicionV in H0.
-  inversion H1.
-  inversion H2.
-  destruct H5 as [AOSA EMA].
-  elim EMA.
-  intros.
-  exists x.
-  rewrite <- H6.
-  destruct H5.
-  
-          assert ( (oss s) (active_os s) >>= (fun actual_os : os =>
-      (hypervisor s) (active_os s) >>= (fun hso : padd |-> madd =>
-        hso (curr_page actual_os) >>= (fun ma : madd =>
-          (memory s) ma >>= (fun mp : page =>
-            exists va_to_ma : vadd |-> madd, page_content mp = PT va_to_ma
-            /\ forall va : vadd, va_to_ma va >>= (fun ma' : madd =>
-                 (memory s) ma' >>= (fun mp' : page =>
-                   (ctxt_vadd_accessible ctxt va = true -> page_owned_by mp' = Osi (active_os s))
-                   /\ (ctxt_vadd_accessible ctxt va = false -> page_owned_by mp' = Hyp)
-    ))))))) by
-          exact (H4 (active_os s)).
-
-  split.
-    trivial.
-
-    unfold va_mapped_to_ma in H5.
-    unfold bindapp in H0, H4, H5, H8.
-    unfold bindapp.
-    
-    destruct (oss s (active_os s)).
-    destruct (H0 (active_os s) (curr_page o)).
-      destruct (hypervisor s (active_os s)).
-        destruct (p (curr_page o)).
-          destruct (memory s x).
-          destruct (memory s m).
-          exists p0.
-          unfold bindapp in H10.
-          split.
-            trivial.
-
-            
-            elim H5.
-            elim H8.
-            intros.
-            destruct H11.
-            destruct (x1 va).
-            assert (match x0 va with
-      | Some x1 =>
-          match memory s x1 with
-          | Some x2 =>
-              (ctxt_vadd_accessible ctxt va = true ->
-               page_owned_by x2 = Osi (active_os s)) /\
-              (ctxt_vadd_accessible ctxt va = false ->
-               page_owned_by x2 = Hyp)
-          | None => False
-          end
-      | None => False
-      end) by exact (H13 va).
-            
-            destruct (x0 va).
-            destruct (memory s m1).
-            destruct H14.
-             destruct (H0 (active_os s) (curr_page o)).
-                destruct (hypervisor s (active_os s)).
-                  destruct (p3 (curr_page o)).
-                    destruct (memory s m2).
-                    rewrite <- H16 in H9.
-                    
-              exists p0.
-              split.
-                trivial.
-
-                destruct (H0 (active_os s) (curr_page o)).
-                destruct (hypervisor s (active_os s)).
-                  destruct (p1 (curr_page o)).
-                    destruct (memory s m1).
-                    
-  
+    rewrite H0 in VtoM; contradiction.
 Qed.
 
 End Actions.
