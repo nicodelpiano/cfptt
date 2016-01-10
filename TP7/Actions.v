@@ -139,6 +139,17 @@ Definition condicionV (s : state) : Prop :=
   pages owned by the hypervisor
 *)
 Definition condicionVI (s : state) : Prop :=
+  forall (osi : os_ident) (ma : madd),
+    (memory s) ma >>= (fun mp : page => page_owned_by mp = Osi osi ->
+      exists vama : vadd |-> madd, page_content mp = PT vama ->
+        forall va : vadd, vama va >>= (fun ma' : madd =>
+          (memory s) ma' >>= (fun mp' : page => 
+            (ctxt_vadd_accessible ctxt va = true -> page_owned_by mp' = Osi osi)
+            /\ (ctxt_vadd_accessible ctxt va = false -> page_owned_by mp' = Hyp)
+    )))
+.
+
+Definition condicionVI' (s : state) : Prop :=
   forall (osi : os_ident),
     (oss s) osi >>= (fun actual_os : os =>
       (hypervisor s) osi >>= (fun hso : padd |-> madd =>
@@ -163,6 +174,7 @@ Inductive one_step_exec (s : state) (a : action) (s' : state) : Prop :=
 .
 
 (* Ejercicio 6 *)
+
 Lemma PreservaIII : forall (s s' : state) (a : action), one_step_exec s a s' -> condicionIII s'.
 Proof.
   destruct a; intro; inversion H; inversion H0; inversion H1;
