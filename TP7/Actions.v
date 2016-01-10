@@ -29,7 +29,7 @@ Definition va_mapped_to_ma (s : state) (va : vadd) (ma : madd) : Prop :=
   (oss s) (active_os s) >>= (fun actual_os : os =>
     (hypervisor s) (active_os s) >>= (fun map_p_to_m : padd |-> madd =>
       map_p_to_m (curr_page actual_os) >>= (fun actual_ma : madd =>
-        (memory s) ma >>= (fun mp : page =>
+        (memory s) actual_ma >>= (fun mp : page =>
           exists map_v_to_m : vadd |-> madd,
             page_content mp = PT map_v_to_m /\
               map_v_to_m va >>= (fun ma' : madd => ma' = ma)
@@ -163,59 +163,6 @@ Inductive one_step_exec (s : state) (a : action) (s' : state) : Prop :=
 .
 
 (* Ejercicio 6 *)
-Lemma PreservaIII' : forall (s s' : state) (a : action), one_step_exec s a s' -> condicionIII s'.
-Proof.
-  destruct a; intro.
-    inversion H.
-    inversion H0.
-    inversion H2.
-    rewrite <- H5.
-    trivial.
-
-    inversion H.
-    inversion H0.
-    inversion H2.
-    inversion H1.
-    unfold condicionIII.
-    intro.
-    destruct H5 as [_ [_ [AOSE [AOSA [_ [AOS _]]]]]].
-    elim H3.
-      trivial.
-
-      elim H8; intro.
-        left.
-        rewrite <- AOSA.
-        rewrite <- AOS.
-        trivial.
-
-        right.
-        rewrite <- AOSA.
-        trivial.
-
-    inversion H.
-    inversion H0.
-    inversion H2.
-      inversion H1.
-      unfold condicionIII.
-      intro.
-      destruct H5 as [_ [AOSE _]].
-      trivial.
-
-      inversion H1.
-      unfold condicionIII.
-      intro.
-      elim H8; intro.
-        destruct H9 as [_ CO'].
-        destruct H5 as [CO [_ [_ [_ [_ [AOS _]]]]]].
-        rewrite AOS in CO'.
-        rewrite CO in CO'.
-        discriminate.
-
-        destruct H5 as [_ [_ [AOSA _]]].
-        rewrite AOSA in H9.
-        discriminate.
-Qed.
-
 Lemma PreservaIII : forall (s s' : state) (a : action), one_step_exec s a s' -> condicionIII s'.
 Proof.
   destruct a; intro; inversion H; inversion H0; inversion H1;
@@ -242,12 +189,188 @@ Proof.
   ].
 Qed.
 
+(* Ejercicio 7 *)
+
+Definition assert1 (s : state) : Prop :=
+  oss s (active_os s) >>=
+     (fun actual_os : os =>
+      hypervisor s (active_os s) >>=
+      (fun hso : padd |-> madd =>
+       hso (curr_page actual_os) >>=
+       (fun ma : madd =>
+        memory s ma >>=
+        (fun mp : page =>
+         exists va_to_ma : vadd |-> madd,
+           page_content mp = PT va_to_ma /\
+           (forall va0 : vadd,
+            va_to_ma va0 >>=
+            (fun ma' : madd =>
+             memory s ma' >>=
+             (fun mp' : page =>
+              (ctxt_vadd_accessible ctxt va0 = true ->
+               page_owned_by mp' = Osi (active_os s)) /\
+              (ctxt_vadd_accessible ctxt va0 = false ->
+               page_owned_by mp' = Hyp))))))))
+.
+
+Definition assert2 (s : state) (x0 : vadd |-> madd) (va : vadd) : Prop :=
+  match x0 va with
+      | Some x0 =>
+          match memory s x0 with
+          | Some x1 =>
+              (ctxt_vadd_accessible ctxt va = true ->
+               page_owned_by x1 = Osi (active_os s)) /\
+              (ctxt_vadd_accessible ctxt va = false ->
+               page_owned_by x1 = Hyp)
+          | None => False
+          end
+      | None => False
+      end
+.
+
 Lemma Read_Isolation : forall (s s' : state) (va : vadd),
+  one_step_exec s (read va) s' ->
+    exists (ma : madd), va_mapped_to_ma s va ma /\
+      (memory s) ma >>= (fun pg : page => page_owned_by pg = Osi (active_os s)).
+Proof.
+  intros.
+  inversion_clear H.
+  destruct H0 as [C1 [C2 C3]].
+  destruct H1 as [CT [AOS EMA]].
+  inversion H2; clear H2.
+  destruct EMA as [MA [VtoM ISRW]].
+  exists MA.
+  rewrite <- H.
+  split.
+    trivial.
+
+    unfold bindapp.
+    unfold va_mapped_to_ma, bindapp in VtoM.
+    case_eq (oss s (active_os s)); intros.
+      rewrite H0 in VtoM.
+      case_eq (hypervisor s (active_os s)); intros.
+        rewrite H1 in VtoM.
+        case_eq (p (curr_page o)); intros.
+          rewrite H2 in VtoM.
+          case_eq (memory s m); intros.
+            rewrite H3 in VtoM.
+            destruct VtoM as [x []].
+            case_eq (x va); intros.
+              rewrite H6 in H5.
+              unfold condicionVI in C3.
+              assert (assert1 s) by exact (C3 (active_os s)); clear C3; unfold assert1 in H7.
+              unfold bindapp in H7.
+              rewrite H0,H1,H2,H3 in H7.
+              elim H7; intros; clear H7.
+              elim H8; intros; clear H8.
+              assert (assert2 s x0 va) by exact (H9 va); unfold assert2 in H8; clear H9.
+                rewrite H4 in H7.
+                injection H7; intro.
+                rewrite <- H9, H6 in H8.
+                rewrite <- H5.
+                  case_eq (memory s m0); intros.
+                  rewrite H10 in H8.
+                  destruct H8.
+                  exact (H8 CT).
+
+                  
+
+                  
+
+
+Qed.
+
+
+
+Lemma Read_Isolation' : forall (s s' : state) (va : vadd),
   one_step_exec s (read va) s' ->
     exists (ma : madd), va_mapped_to_ma s va ma /\
       (exists (pg : page), (memory s) ma >>= (fun pg' : page => pg = pg') /\ page_owned_by pg = Osi (active_os s)).
 Proof.
+  intros.
+  inversion_clear H.
+  inversion_clear H0.
+  inversion_clear H3.
+  unfold condicionIII in H.
+  unfold condicionVI in H4.
+  unfold condicionV in H0.
+  inversion H1.
+  inversion H2.
+  destruct H5 as [AOSA EMA].
+  elim EMA.
+  intros.
+  exists x.
+  rewrite <- H6.
+  destruct H5.
+  
+          assert ( (oss s) (active_os s) >>= (fun actual_os : os =>
+      (hypervisor s) (active_os s) >>= (fun hso : padd |-> madd =>
+        hso (curr_page actual_os) >>= (fun ma : madd =>
+          (memory s) ma >>= (fun mp : page =>
+            exists va_to_ma : vadd |-> madd, page_content mp = PT va_to_ma
+            /\ forall va : vadd, va_to_ma va >>= (fun ma' : madd =>
+                 (memory s) ma' >>= (fun mp' : page =>
+                   (ctxt_vadd_accessible ctxt va = true -> page_owned_by mp' = Osi (active_os s))
+                   /\ (ctxt_vadd_accessible ctxt va = false -> page_owned_by mp' = Hyp)
+    ))))))) by
+          exact (H4 (active_os s)).
 
+  split.
+    trivial.
+
+    unfold va_mapped_to_ma in H5.
+    unfold bindapp in H0, H4, H5, H8.
+    unfold bindapp.
+    
+    destruct (oss s (active_os s)).
+    destruct (H0 (active_os s) (curr_page o)).
+      destruct (hypervisor s (active_os s)).
+        destruct (p (curr_page o)).
+          destruct (memory s x).
+          destruct (memory s m).
+          exists p0.
+          unfold bindapp in H10.
+          split.
+            trivial.
+
+            
+            elim H5.
+            elim H8.
+            intros.
+            destruct H11.
+            destruct (x1 va).
+            assert (match x0 va with
+      | Some x1 =>
+          match memory s x1 with
+          | Some x2 =>
+              (ctxt_vadd_accessible ctxt va = true ->
+               page_owned_by x2 = Osi (active_os s)) /\
+              (ctxt_vadd_accessible ctxt va = false ->
+               page_owned_by x2 = Hyp)
+          | None => False
+          end
+      | None => False
+      end) by exact (H13 va).
+            
+            destruct (x0 va).
+            destruct (memory s m1).
+            destruct H14.
+             destruct (H0 (active_os s) (curr_page o)).
+                destruct (hypervisor s (active_os s)).
+                  destruct (p3 (curr_page o)).
+                    destruct (memory s m2).
+                    rewrite <- H16 in H9.
+                    
+              exists p0.
+              split.
+                trivial.
+
+                destruct (H0 (active_os s) (curr_page o)).
+                destruct (hypervisor s (active_os s)).
+                  destruct (p1 (curr_page o)).
+                    destruct (memory s m1).
+                    
+  
 Qed.
 
 End Actions.
