@@ -22,8 +22,7 @@ Function bindapp (A : Set) (el : option A) (f : A -> Prop) : Prop :=
 
 Function update_partial (A B : Set) (p : partial A B)
   (a_eq : forall pa1 pa2 : A, {pa1 = pa2} + {pa1 <> pa2}) (a : A) (b : B) : partial A B :=
-    fun (x : A) => 
-      if a_eq x a then Some b else p x
+    fun (x : A) => if a_eq x a then Some b else p x
 .
 
 End Maps.

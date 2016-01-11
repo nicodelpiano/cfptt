@@ -25,7 +25,18 @@ Inductive action : Set :=
   'va_mapped_to_ma' expresa que la dirección virtual 'va' esta mapeada
    en la memoria a una direccion de maquina 'ma' para un OS en un estado dado
 *)
+(* cualquier os, o el active_os ? *)
 Definition va_mapped_to_ma (s : state) (va : vadd) (ma : madd) : Prop :=
+  forall actual_os : os, (oss s) (active_os s) = Some actual_os ->
+    exists pa_to_ma : padd |-> madd, (hypervisor s) (active_os s) = Some pa_to_ma ->
+      exists ma' : madd, pa_to_ma (curr_page actual_os) = Some ma' ->
+        exists mp : page, (memory s) ma' = Some mp ->
+          exists va_to_ma : vadd |-> madd,
+            page_content mp = PT va_to_ma ->
+              exists ma' : madd, va_to_ma va = Some ma' -> ma' = ma
+.
+   
+(Definition va_mapped_to_ma' (s : state) (va : vadd) (ma : madd) : Prop :=
   (oss s) (active_os s) >>= (fun actual_os : os =>
     (hypervisor s) (active_os s) >>= (fun map_p_to_m : padd |-> madd =>
       map_p_to_m (curr_page actual_os) >>= (fun actual_ma : madd =>
@@ -34,15 +45,20 @@ Definition va_mapped_to_ma (s : state) (va : vadd) (ma : madd) : Prop :=
             page_content mp = PT map_v_to_m /\
               map_v_to_m va >>= (fun ma' : madd => ma' = ma)
   ))))
-.
+.*)
 
-(* Definition isRW (pc : content) : Prop :=
+(*
+Definition isRW (pc : content) : Prop :=
   match pc with
     | RW _ => True
     | _ => False
   end
-. *)
+.*)
 
+(* es correcto esto? si en la memoria hay un none no es rw
+  (tambien preguntar si es correcto que no tome un content directamente como esta
+  en el paper
+*)
 Definition isRW (s : state) (ma : madd) : Prop :=
   (memory s) ma >>= (fun mp : page =>
     exists ov : option value, page_content mp = RW ov
@@ -121,6 +137,16 @@ Definition condicionIII (s : state) : Prop :=
   that same OS. This mapping is also injective
 *)
 Definition condicionV (s : state) : Prop :=
+  forall (osi : os_ident) (pa : padd) (pa_to_ma : padd |-> madd),
+    ((hypervisor s) osi = Some pa_to_ma
+    -> (exists ma : madd, pa_to_ma pa = Some ma
+       /\ (exists mp : page, (memory s) ma = Some mp -> page_owned_by mp = Osi osi)))
+    /\ forall (pa2 : padd),
+       pa_to_ma pa = pa_to_ma pa2 -> pa = pa2
+.      
+
+(*
+Definition condicionV' (s : state) : Prop :=
   forall (osi : os_ident) (pa : padd),
     ((hypervisor s) osi >>= (fun hso : padd |-> madd =>
       hso pa >>= (fun ma : madd =>
@@ -132,6 +158,7 @@ Definition condicionV (s : state) : Prop :=
       (hypervisor s) osi >>= (fun hso : padd |-> madd =>
         ~ (hso pa = None madd) /\ hso pa = hso pa2 -> pa = pa2)
 .
+*)
 
 (*
   all page tables of an OS o
@@ -139,6 +166,19 @@ Definition condicionV (s : state) : Prop :=
   pages owned by the hypervisor
 *)
 Definition condicionVI (s : state) : Prop :=
+  forall (osi : os_ident) (mp : page) (va_to_ma : vadd |-> madd),
+    page_owned_by mp = Osi osi
+    /\ page_content mp = PT va_to_ma
+    /\ (exists ma : madd, (memory s) ma = Some mp)
+    -> forall va : vadd, (exists ma' : madd,
+                             va_to_ma va = Some ma'
+                             /\ (exists mp' : page, (memory s) ma' = Some mp'
+                               -> (ctxt_vadd_accessible ctxt va = true -> page_owned_by mp' = Osi osi
+                                  /\ ctxt_vadd_accessible ctxt va = false -> page_owned_by mp' = Hyp)
+   ))
+.
+
+(*Definition condicionVI' (s : state) : Prop :=
   forall (osi : os_ident) (ma : madd),
     (memory s) ma >>= (fun mp : page =>
       exists vama : vadd |-> madd, page_content mp = PT vama -> page_owned_by mp = Osi osi ->
@@ -147,9 +187,9 @@ Definition condicionVI (s : state) : Prop :=
             (ctxt_vadd_accessible ctxt va = true -> page_owned_by mp' = Osi osi)
             /\ (ctxt_vadd_accessible ctxt va = false -> page_owned_by mp' = Hyp)
     )))
-.
+. 
 
-Definition condicionVI' (s : state) : Prop :=
+Definition condicionVI'' (s : state) : Prop :=
   forall (osi : os_ident),
     (oss s) osi >>= (fun actual_os : os =>
       (hypervisor s) osi >>= (fun hso : padd |-> madd =>
@@ -162,6 +202,7 @@ Definition condicionVI' (s : state) : Prop :=
                    /\ (ctxt_vadd_accessible ctxt va = false -> page_owned_by mp' = Hyp)
     ))))))
 .
+*)
 
 Definition valid_state (s : state) : Prop :=
   condicionIII s /\ condicionV s /\ condicionVI s
@@ -203,6 +244,35 @@ Qed.
 
 (* Ejercicio 7 *)
 
+Lemma Read_Isolation : forall (s s' : state) (va : vadd),
+  one_step_exec s (read va) s'
+    -> exists ma : madd, va_mapped_to_ma s va ma
+       /\ exists pg : page,
+           (memory s) ma = Some pg /\ page_owned_by pg = Osi (active_os s)
+.
+Proof.
+  intros.
+  do 2 destruct H.
+  destruct H2.
+  destruct H0 as [VA_ACC [AOSA EMA]].
+  (*inversion H1; clear H1. *)
+  elim EMA.
+  intros.
+  destruct H0.
+  exists x.
+  split.
+    trivial.
+
+    unfold va_mapped_to_ma in H0.
+    unfold condicionVI in H3.
+    unfold condicionV in H2.
+    case_eq ((oss s) (active_os s)); intros.
+      elim (H0 o); intros; trivial; clear H0.
+      case_eq (hypervisor s (active_os s))); intros.
+      
+Qed.
+
+(*
 Definition assert1 (s : state) : Prop :=
   oss s (active_os s) >>=
      (fun actual_os : os =>
@@ -240,7 +310,7 @@ Definition assert2 (s : state) (x0 : vadd |-> madd) (va : vadd) : Prop :=
       end
 .
 
-Lemma Read_Isolation : forall (s s' : state) (va : vadd),
+Lemma Read_Isolation' : forall (s s' : state) (va : vadd),
   one_step_exec s (read va) s' ->
     exists (ma : madd), va_mapped_to_ma s va ma /\
       (memory s) ma >>= (fun pg : page => page_owned_by pg = Osi (active_os s)).
@@ -297,5 +367,6 @@ Proof.
 
     rewrite H0 in VtoM; contradiction.
 Qed.
+*)
 
 End Actions.
