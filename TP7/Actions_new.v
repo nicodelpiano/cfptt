@@ -26,17 +26,56 @@ Inductive action : Set :=
    en la memoria a una direccion de maquina 'ma' para un OS en un estado dado
 *)
 (* cualquier os, o el active_os ? *)
-Definition va_mapped_to_ma (s : state) (va : vadd) (ma : madd) : Prop :=
-  forall actual_os : os, (oss s) (active_os s) = Some actual_os ->
-    exists pa_to_ma : padd |-> madd, (hypervisor s) (active_os s) = Some pa_to_ma ->
-      exists ma' : madd, pa_to_ma (curr_page actual_os) = Some ma' ->
-        exists mp : page, (memory s) ma' = Some mp ->
-          exists va_to_ma : vadd |-> madd,
-            page_content mp = PT va_to_ma ->
-              exists ma' : madd, va_to_ma va = Some ma' -> ma' = ma
+Definition va_mapped_to_ma'' (s : state) (va : vadd) (ma : madd) : Prop :=
+  exists (actual_os : os) (pa_to_ma : padd |-> madd) (ma' ma'': madd) (mp : page) (va_to_ma : vadd |-> madd),
+    (oss s) (active_os s) = Some actual_os
+    /\ (hypervisor s) (active_os s) = Some pa_to_ma
+    /\ pa_to_ma (curr_page actual_os) = Some ma'
+    /\ (memory s) ma' = Some mp
+    /\ page_content mp = PT va_to_ma
+    /\ va_to_ma va = Some ma'' -> ma'' = ma
 .
-   
-(Definition va_mapped_to_ma' (s : state) (va : vadd) (ma : madd) : Prop :=
+
+Definition va_mapped_to_ma (s : state) (va : vadd) (ma : madd) : Prop :=
+  exists actual_os : os, (oss s) (active_os s) = Some actual_os /\
+    exists pa_to_ma : padd |-> madd, (hypervisor s) (active_os s) = Some pa_to_ma /\
+      exists ma' : madd, pa_to_ma (curr_page actual_os) = Some ma' /\
+        exists mp : page, (memory s) ma' = Some mp /\
+          exists va_to_ma : vadd |-> madd, page_content mp = PT va_to_ma /\
+            va_to_ma va = Some ma
+.
+
+(*Definition va_mapped_to_ma (s : state) (va : vadd) (ma : madd) : Prop :=
+  exists actual_os : os, (oss s) (active_os s) = Some actual_os /\
+    exists pa_to_ma : padd |-> madd, (hypervisor s) (active_os s) = Some pa_to_ma /\
+      exists ma' : madd, pa_to_ma (curr_page actual_os) = Some ma' /\
+        exists mp : page, (memory s) ma' = Some mp /\
+          exists va_to_ma : vadd |-> madd, page_content mp = PT va_to_ma ->
+            va_to_ma va = Some ma
+. *)
+
+Inductive va_mapped_to_ma' : state -> vadd -> madd -> Prop :=
+  | vamatoma : forall (s : state) (va : vadd) (ma : madd),
+  (exists actual_os : os, (oss s) (active_os s) = Some actual_os /\
+    exists pa_to_ma : padd |-> madd, (hypervisor s) (active_os s) = Some pa_to_ma /\
+      exists ma' : madd, pa_to_ma (curr_page actual_os) = Some ma' /\
+        exists mp : page, (memory s) ma' = Some mp /\
+          exists va_to_ma : vadd |-> madd, page_content mp = PT va_to_ma /\
+              exists ma'' : madd, va_to_ma va = Some ma'' -> ma'' = ma) -> va_mapped_to_ma' s va ma
+.
+
+Inductive va_mapped_to_ma2 : state -> vadd -> madd -> Prop :=
+  | vamatoma' : forall (s : state) (va : vadd) (ma : madd) ,(
+ exists (actual_os : os) (pa_to_ma : padd |-> madd) (ma' ma'': madd) (mp : page) (va_to_ma : vadd |-> madd),
+    (oss s) (active_os s) = Some actual_os
+    /\ (hypervisor s) (active_os s) = Some pa_to_ma
+    /\ pa_to_ma (curr_page actual_os) = Some ma'
+    /\ (memory s) ma' = Some mp
+    /\ page_content mp = PT va_to_ma
+    /\ va_to_ma va = Some ma'' -> ma'' = ma) -> va_mapped_to_ma2 s va ma
+.
+
+(*Definition va_mapped_to_ma' (s : state) (va : vadd) (ma : madd) : Prop :=
   (oss s) (active_os s) >>= (fun actual_os : os =>
     (hypervisor s) (active_os s) >>= (fun map_p_to_m : padd |-> madd =>
       map_p_to_m (curr_page actual_os) >>= (fun actual_ma : madd =>
@@ -140,7 +179,7 @@ Definition condicionV (s : state) : Prop :=
   forall (osi : os_ident) (pa : padd) (pa_to_ma : padd |-> madd),
     ((hypervisor s) osi = Some pa_to_ma
     -> (exists ma : madd, pa_to_ma pa = Some ma
-       /\ (exists mp : page, (memory s) ma = Some mp -> page_owned_by mp = Osi osi)))
+       /\ (exists mp : page, (memory s) ma = Some mp /\ page_owned_by mp = Osi osi)))
     /\ forall (pa2 : padd),
        pa_to_ma pa = pa_to_ma pa2 -> pa = pa2
 .      
@@ -166,6 +205,20 @@ Definition condicionV' (s : state) : Prop :=
   pages owned by the hypervisor
 *)
 Definition condicionVI (s : state) : Prop :=
+  forall (osi : os_ident) (mp : page) (va_to_ma : vadd |-> madd) (va : vadd),
+    page_owned_by mp = Osi osi
+    /\ page_content mp = PT va_to_ma
+    /\ (exists ma : madd, (memory s) ma = Some mp)
+    -> (exists ma' : madd,
+                             va_to_ma va = Some ma'
+                             /\ (exists mp' : page, (memory s) ma' = Some mp'
+                               /\ (ctxt_vadd_accessible ctxt va = true -> page_owned_by mp' = Osi osi)
+                                  /\ (ctxt_vadd_accessible ctxt va = false -> page_owned_by mp' = Hyp)
+   ))
+.
+
+(*
+Definition condicionVI (s : state) : Prop :=
   forall (osi : os_ident) (mp : page) (va_to_ma : vadd |-> madd),
     page_owned_by mp = Osi osi
     /\ page_content mp = PT va_to_ma
@@ -177,6 +230,7 @@ Definition condicionVI (s : state) : Prop :=
                                   /\ ctxt_vadd_accessible ctxt va = false -> page_owned_by mp' = Hyp)
    ))
 .
+*)
 
 (*Definition condicionVI' (s : state) : Prop :=
   forall (osi : os_ident) (ma : madd),
@@ -255,7 +309,6 @@ Proof.
   do 2 destruct H.
   destruct H2.
   destruct H0 as [VA_ACC [AOSA EMA]].
-  (*inversion H1; clear H1. *)
   elim EMA.
   intros.
   destruct H0.
@@ -264,12 +317,39 @@ Proof.
     trivial.
 
     unfold va_mapped_to_ma in H0.
-    unfold condicionVI in H3.
+    destruct H0 as [actual_os [AOs [pa_to_ma [PaMa [ma' [MA' [mp [MP [va_to_ma [VTM VTM2]]]]]]]]]].
+
     unfold condicionV in H2.
-    case_eq ((oss s) (active_os s)); intros.
-      elim (H0 o); intros; trivial; clear H0.
-      case_eq (hypervisor s (active_os s))); intros.
-      
+    destruct (H2 (active_os s) (curr_page actual_os) pa_to_ma); clear H2.
+    assert (     exists ma : madd,
+       pa_to_ma (curr_page actual_os) = Some ma /\
+       (exists mp0 : page,
+          memory s ma = Some mp0 /\ page_owned_by mp0 = Osi (active_os s))) by exact (H0 PaMa); clear H0.
+    destruct H2 as [ma [PaMa' [mp0 [MP0 MP1]]]].
+
+    rewrite MA' in PaMa'.
+    injection PaMa'; intro; clear PaMa'.
+
+    rewrite H0 in MP.
+    rewrite MP in MP0.
+    injection MP0; intro; clear MP0.
+    rewrite <- H2 in MP1.
+
+    unfold condicionVI in H3.
+    destruct (H3 (active_os s) mp va_to_ma va).
+    split; [ | split];trivial.
+    exists ma.
+    trivial.
+    
+    destruct H6.
+    elim H7; intros.
+    destruct H8.
+    destruct H9.
+    rewrite H6 in VTM2.
+    injection VTM2; intro; clear VTM2.
+    rewrite <- H11.
+    exists x1.
+    split; [trivial | apply (H9 VA_ACC)].
 Qed.
 
 (*
